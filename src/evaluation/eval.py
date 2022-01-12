@@ -1,9 +1,11 @@
+"""Origin evaluation file."""
+
+# pylint: skip-file
+
 import os
 import re
 from collections import Counter
 from copy import deepcopy
-from dataclasses import dataclass
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import fire
@@ -19,50 +21,13 @@ RECALL = "recall"
 PRECISION = "precision"
 F1_SCORE = "f1_score"
 
-
-@dataclass
-class Token:
-    label: str
-    text: str
-    line: int
-    word_index: int
-
-
-@dataclass
-class EntityAnnotation:
-    label: str
-    text: str
-    start_line: int
-    end_line: int
-    start_word: int
-    end_word: int
-
-
-class RelationValue(Enum):
-    TrAP = "TrAP"
-    TrNAP = "TrNAP"
-    TrCP = "TrCP"
-    TeRP = "TeRP"
-    TeCP = "TeCP"
-    TrIP = "TrIP"
-    PIP = "PIP"
-    TrWP = "TrWP"
-
-
-@dataclass
-class EntityAnnotationForRelation:
-    text: str
-    start_line: int
-    end_line: int
-    start_word: int
-    end_word: int
-
-
-@dataclass
-class RelationAnnotation:
-    label: RelationValue
-    left_entity: EntityAnnotationForRelation
-    right_entity: EntityAnnotationForRelation
+from src.types import (
+    EntityAnnotation,
+    EntityAnnotationForRelation,
+    RelationAnnotation,
+    RelationValue,
+    Token,
+)
 
 
 class Evaluator:
@@ -243,7 +208,7 @@ class Evaluator:
 
     def _load_relation_annotation_file(self, path: str) -> List[RelationAnnotation]:
         relations_annotated = []
-        with open(path, "r") as input_file:
+        with open(path, "r", encoding="utf-8") as input_file:
             for rel_line in input_file.readlines():
                 rel_annotation = self._parse_relation_annotation(rel_line)
                 if rel_annotation is not None:
@@ -254,7 +219,7 @@ class Evaluator:
 
     def _load_entity_annotation_file(self, path: str, task: str) -> List[EntityAnnotation]:
         entities_annotated = []
-        with open(path, "r") as input_file:
+        with open(path, "r", encoding="utf-8") as input_file:
             for entity_line in input_file.readlines():
                 if task == TASK_CONCEPT:
                     entity_annotation = self._parse_concept_annotation(entity_line)
@@ -272,7 +237,7 @@ class Evaluator:
     @staticmethod
     def _load_input_text_file(path: str) -> List[List[Token]]:
         tokens = []
-        with open(path, "r") as input_file:
+        with open(path, "r", encoding="utf-8") as input_file:
             for i, line in enumerate(input_file.readlines()):
                 tokens.append(
                     [
