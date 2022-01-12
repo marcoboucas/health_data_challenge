@@ -62,6 +62,8 @@ suggestion-mode=yes
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
 
+# Disable missing module docstring
+disable=missing-module-docstring
 
 [MESSAGES CONTROL]
 
