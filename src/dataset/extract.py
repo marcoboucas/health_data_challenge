@@ -9,20 +9,22 @@ def create_all_docs_csv() -> None:
     """
     Create a csv file with all the docs
     """
-    classification_subfolders = ["concept", "ast", "rel"]
     doc_list = []
     for dirname in os.listdir(config.RAW_DATA_FOLDER):
         folder_path = os.path.join(config.RAW_DATA_FOLDER, dirname)
         doc_list.extend(
             [
                 {
-                    "name": filename,
+                    "name": filename.split(".")[0],
                     "path": os.path.join(folder_path, "txt", filename),
-                    **{
-                        c: os.path.join(folder_path, c, filename) for c in classification_subfolders
-                    },
+                    "concept": os.path.join(
+                        folder_path, "concept", f"{filename.split('.')[0]}.con"
+                    ),
+                    "rel": os.path.join(folder_path, "rel", f"{filename.split('.')[0]}.rel"),
+                    "ast": os.path.join(folder_path, "ast", f"{filename.split('.')[0]}.ast"),
                 }
                 for filename in os.listdir(os.path.join(folder_path, "txt"))
+                if filename[0] != "."
             ]
         )
     df = pd.DataFrame(doc_list)
@@ -42,6 +44,7 @@ def create_test_csv() -> None:
             "path": os.path.join(folder_path, "txt", filename),
         }
         for filename in os.listdir(os.path.join(folder_path, "txt"))
+        if filename[0] != "."
     ]
     df = pd.DataFrame(doc_list)
     df = df.sample(frac=1, random_state=config.RANDOM_STATE).reset_index(drop=True)
