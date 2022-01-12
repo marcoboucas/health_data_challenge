@@ -9,7 +9,6 @@ def create_all_docs_csv() -> None:
     """
     Create a csv file with all the docs
     """
-    # Create new `pandas` methods which use `tqdm` progress
     classification_subfolders = ["concept", "ast", "rel"]
     doc_list = []
     for dirname in os.listdir(config.RAW_DATA_FOLDER):
@@ -35,7 +34,6 @@ def create_test_csv() -> None:
     """
     Create a csv file with all the docs
     """
-    # Create new `pandas` methods which use `tqdm` progress
     doc_list = []
     folder_path = config.TEST_DATA_FOLDER
     doc_list = [
