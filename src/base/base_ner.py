@@ -33,6 +33,6 @@ class BaseNer(ABC):
                     (
                         f'c="{entity.text}" {entity.start_line}:{entity.start_word} '
                         f"{entity.end_line}:{entity.end_word} "
-                        f'||t="{entity.label}"'
+                        f'||t="{entity.label}"\n'
                     )
                 )
