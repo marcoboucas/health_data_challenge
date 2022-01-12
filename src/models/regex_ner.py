@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass, field
 from typing import List, Optional, Set, Union
 
+from src import config
 from src.base.base_ner import NER_LABELS, BaseNer
 from src.types import EntityAnnotation, Token
 
@@ -29,6 +30,7 @@ class RegexNer(BaseNer):
         super().__init__()
         self.weights = RegexNerWeights()
         if weights_path is not None:
+            self.logger.info("Loading the pretrained weights")
             self.load_from_weights(weights_path=weights_path)
 
     def extract_entities(self, texts: List[str]) -> List[List[EntityAnnotation]]:
@@ -55,7 +57,7 @@ class RegexNer(BaseNer):
                     )
         return tokens
 
-    def load_from_weights(self, weights_path: str) -> None:
+    def load_from_weights(self, weights_path: str = config.NER_REGEX_WEIGHTS_FILE) -> None:
         """Load the weights."""
         if not os.path.isfile(weights_path):
             self.logger.warning("No file found here: '%s'", weights_path)
@@ -63,7 +65,7 @@ class RegexNer(BaseNer):
         with open(weights_path, "rb") as file:
             self.weights = pickle.load(file)
 
-    def save_weights(self, weights_path: str) -> None:
+    def save_weights(self, weights_path: str = config.NER_REGEX_WEIGHTS_FILE) -> None:
         """Save the weights in a file."""
         with open(weights_path, "wb") as file:
             pickle.dump(self.weights, file)
@@ -103,3 +105,4 @@ if __name__ == "__main__":
     pprint(
         ner.extract_entities(["I had an electrocardiogram\n and bad cough", "I have a tough cough"])
     )
+    ner.save_weights()

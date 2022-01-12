@@ -18,6 +18,11 @@ TRAIN_CSV = os.path.join(DATA_FOLDER, "train.csv")
 VALIDATION_CSV = os.path.join(DATA_FOLDER, "validation.csv")
 TEST_CSV = os.path.join(DATA_FOLDER, "test.csv")
 
+
+MODELS_WEIGHTS_FOLDER = os.path.join(ROOT_FOLDER, "weights")
+
+NER_REGEX_WEIGHTS_FILE = os.path.join(MODELS_WEIGHTS_FOLDER, "ner_regex.pkl")
+
 ###########################
 ### About preprocessing ###
 ###########################
