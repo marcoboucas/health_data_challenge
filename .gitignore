@@ -141,8 +141,5 @@ data/*
 !data/validation.csv
 !data/test.csv
 *.pdf
-<<<<<<< Updated upstream
 .vscode
-=======
 .DS_Store
->>>>>>> Stashed changes
