@@ -142,3 +142,4 @@ data/*
 !data/test.csv
 *.pdf
 .vscode
+.DS_Store
