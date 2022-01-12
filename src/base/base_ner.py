@@ -4,7 +4,9 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.types import EntityAnnotation, Token
+from src.types import EntityAnnotation
+
+NER_LABELS = {"problem", "test", "treatment"}
 
 
 class BaseNer(ABC):
@@ -15,9 +17,10 @@ class BaseNer(ABC):
     def __init__(self) -> None:
         """Init."""
         self.logger = logging.getLogger(__name__)
+        self.logger.info("Init the NER...")
 
     @abstractmethod
-    def extract_entities(self, texts: List[str]) -> List[List[Token]]:
+    def extract_entities(self, texts: List[str]) -> List[List[EntityAnnotation]]:
         """Extract entities from a list of texts.
 
         :param texts: A list of texts
