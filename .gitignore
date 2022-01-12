@@ -137,3 +137,4 @@ test.py
 test.ipynb
 data/
 *.pdf
+.vscode
