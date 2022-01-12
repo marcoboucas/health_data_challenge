@@ -135,6 +135,10 @@ tmp_*.py
 docs
 test.py
 test.ipynb
-data/
+data/*
+!data/all_documents.csv
+!data/train.csv
+!data/validation.csv
+!data/test.csv
 *.pdf
 .vscode
