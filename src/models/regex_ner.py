@@ -38,6 +38,7 @@ class RegexNer(BaseNer):
     def __extract_entities_one_file(self, text: str) -> List[EntityAnnotation]:
         """Extract entities for one file."""
         tokens = []
+        # We suppose an entity can be found only on one line
         for i, line in enumerate(text.split("\n")):
             for match in self.weights.pattern.finditer(line):
                 label = self.find_token_label(match.group(0))
@@ -99,4 +100,6 @@ if __name__ == "__main__":
 
     ner.train([[Token("test", "electrocardiogram", 10, 1), Token("problem", "cough", 13, 1)]])
 
-    pprint(ner.extract_entities(["I had an electrocardiogram", "I have a tough cough"]))
+    pprint(
+        ner.extract_entities(["I had an electrocardiogram\n and bad cough", "I have a tough cough"])
+    )
