@@ -17,8 +17,12 @@ class BaseNer(ABC):
         self.logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def extract_entities(self, texts: List[str]) -> List[Token]:
-        """Extract entities from a list of texts."""
+    def extract_entities(self, texts: List[str]) -> List[List[Token]]:
+        """Extract entities from a list of texts.
+
+        :param texts: A list of texts
+        :returns: A list of tokens per text.
+        """
 
     @staticmethod
     def entities_to_file(entities: List[EntityAnnotation], file_path: str) -> None:
