@@ -1,3 +1,5 @@
+"""MedCAT NER."""
+
 from collections import defaultdict
 import os
 import pickle
