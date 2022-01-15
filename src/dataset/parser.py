@@ -1,31 +1,41 @@
-from typing import Dict, Optional, List, Union
-from collections import defaultdict
-import re
-import os
 import logging
+import os
+import re
+from collections import defaultdict
+from typing import Callable, Dict, List, Optional, Union
 
 from src.types import (
     EntityAnnotation,
+    EntityAnnotationForRelation,
     RelationAnnotation,
     RelationValue,
-    EntityAnnotationForRelation,
 )
 
 
 class Parser:
+    """Document parser."""
+
     def __init__(self) -> None:
         pass
 
-    def parse_annotation_relation(self, path: str) -> List[RelationAnnotation]:
+    @staticmethod
+    def parse_annotation_relation(path: str) -> List[RelationAnnotation]:
+        """Parse one relation file."""
         return parser(parse_one_relation, path)
 
-    def parse_annotation_concept(self, path: str) -> List[RelationAnnotation]:
+    @staticmethod
+    def parse_annotation_concept(path: str) -> List[EntityAnnotation]:
+        """Parse one concept file."""
         return parser(parse_one_concept, path)
 
-    def parse_annotation_assertion(self, path: str) -> List[RelationAnnotation]:
+    @staticmethod
+    def parse_annotation_assertion(path: str) -> List[EntityAnnotation]:
+        """Parse one assertion file."""
         return parser(parse_one_assertion, path)
 
-    def parse_raw_text(self, raw_text_path: str) -> Dict[str, str]:
+    @staticmethod
+    def parse_raw_text(raw_text_path: str) -> Dict[str, str]:
+        """Parse the raw text."""
 
         formated_text = defaultdict(str)
 
@@ -38,10 +48,18 @@ class Parser:
                 else:
                     formated_text[current_key] += clean_txt(line)
 
-        return formated_text
+        return dict(formated_text)
+
+    @staticmethod
+    def get_raw_text(raw_text_path: str) -> List[str]:
+        """Return the raw text."""
+        with open(raw_text_path, "r", encoding="utf-8") as raw:
+            lines = raw.readlines()
+        return lines
 
 
 def is_section_title(line: str) -> bool:
+    """Check if a line is a title (key of dictionary)."""
     # double points at end
     if re.search(r":$", line):
         return True
@@ -52,18 +70,21 @@ def is_section_title(line: str) -> bool:
 
 
 def clean_section_name(section_name: str) -> str:
+    """Clean a name section."""
     return section_name.replace("\n", "").replace(" :", "").replace(":", "")
 
 
 def clean_txt(line: str) -> str:
+    """Clean a line by removing unwanted characters."""
     return line.replace("_", "").replace("\n", "")
 
 
-def parser(func: callable, path: str) -> Union[List[RelationAnnotation], List[EntityAnnotation]]:
+def parser(func: Callable, path: str) -> Union[List[RelationAnnotation], List[EntityAnnotation]]:
+    """Parse one file, either relation, concept or assertion."""
     entities_annotated = []
-    entity_annotation = None
     with open(os.path.abspath(path), "r", encoding="utf-8") as input_file:
         for entity_line in input_file.readlines():
+            entity_annotation = func(entity_line)
             if entity_annotation is not None:
                 entities_annotated.append(func(entity_line))
             else:
@@ -72,57 +93,58 @@ def parser(func: callable, path: str) -> Union[List[RelationAnnotation], List[En
 
 
 def parse_one_relation(line: str) -> Optional[EntityAnnotation]:
+    """Parse one relation file."""
     try:
         return RelationAnnotation(
             label=RelationValue[
                 line.split("||")[1].split("=")[1].replace('"', "").replace("\n", "")
             ],
             left_entity=EntityAnnotationForRelation(
-                text=re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[0]
+                text=re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[0]
                 .split("=")[1]
                 .replace('"', ""),
                 start_line=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[1]
                     .split(" ")[0]
                     .split(":")[0]
                 ),
                 start_word=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[1]
                     .split(" ")[0]
                     .split(":")[1]
                 ),
                 end_line=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[1]
                     .split(" ")[1]
                     .split(":")[0]
                 ),
                 end_word=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[0])[1]
                     .split(" ")[1]
                     .split(":")[1]
                 ),
             ),
             right_entity=EntityAnnotationForRelation(
-                text=re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[0]
+                text=re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[0]
                 .split("=")[1]
                 .replace('"', ""),
                 start_line=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[1]
                     .split(" ")[0]
                     .split(":")[0]
                 ),
                 start_word=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[1]
                     .split(" ")[0]
                     .split(":")[1]
                 ),
                 end_line=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[1]
                     .split(" ")[1]
                     .split(":")[0]
                 ),
                 end_word=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", line.split("||")[2])[1]
                     .split(" ")[1]
                     .split(":")[1]
                 ),
@@ -133,29 +155,30 @@ def parse_one_relation(line: str) -> Optional[EntityAnnotation]:
 
 
 def parse_one_concept(text: str) -> Optional[EntityAnnotation]:
+    """Parse one concept file."""
     try:
         return EntityAnnotation(
             label=text.split("||")[1].split("=")[1].replace('"', "").replace("\n", ""),
-            text=re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
+            text=re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
             .split("=")[1]
             .replace('"', ""),
             start_line=int(
-                re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                 .split(" ")[0]
                 .split(":")[0]
             ),
             start_word=int(
-                re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                 .split(" ")[0]
                 .split(":")[1]
             ),
             end_line=int(
-                re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                 .split(" ")[1]
                 .split(":")[0]
             ),
             end_word=int(
-                re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                 .split(" ")[1]
                 .split(":")[1]
             ),
@@ -165,29 +188,30 @@ def parse_one_concept(text: str) -> Optional[EntityAnnotation]:
 
 
 def parse_one_assertion(text: str) -> Optional[EntityAnnotation]:
+    """Parse one assertion file."""
     try:
         return EntityAnnotation(
             label=text.split("||")[2].split("=")[1].replace('"', "").replace("\n", ""),
-            text=re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
+            text=re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
             .split("=")[1]
             .replace('"', ""),
             start_line=int(
-                re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                 .split(" ")[0]
                 .split(":")[0]
             ),
             start_word=int(
-                re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                 .split(" ")[0]
                 .split(":")[1]
             ),
             end_line=int(
-                re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                 .split(" ")[1]
                 .split(":")[0]
             ),
             end_word=int(
-                re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                 .split(" ")[1]
                 .split(":")[1]
             ),
@@ -197,6 +221,4 @@ def parse_one_assertion(text: str) -> Optional[EntityAnnotation]:
 
 
 if __name__ == "__main__":
-    import os
-
     text_file = os.path.join("data", "train_data", "partners", "txt", "018636330_DH.txt")
