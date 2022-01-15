@@ -12,9 +12,9 @@ The script eval.py allows you to evaluate your approach to the first part of the
 
 ### Package installation
 
-```bash
-pip install -r dev.requirements.txt
-```
+
+- Install the dependencies: `pip install -r dev.requirements.txt`
+- Prepare the data by running the command: `python -m src.dataset.extract`
 
 - For MedSpacy, you need to install some weights here: https://medcat.rosalind.kcl.ac.uk/media/medmen_wstatus_2021_oct.zip, you can put them in the `./weights` folder.
 

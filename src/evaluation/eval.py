@@ -254,51 +254,51 @@ class Evaluator:
                     text.split("||")[1].split("=")[1].replace('"', "").replace("\n", "")
                 ],
                 left_entity=EntityAnnotationForRelation(
-                    text=re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
+                    text=re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
                     .split("=")[1]
                     .replace('"', ""),
                     start_line=int(
-                        re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                        re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                         .split(" ")[0]
                         .split(":")[0]
                     ),
                     start_word=int(
-                        re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                        re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                         .split(" ")[0]
                         .split(":")[1]
                     ),
                     end_line=int(
-                        re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                        re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                         .split(" ")[1]
                         .split(":")[0]
                     ),
                     end_word=int(
-                        re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                        re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                         .split(" ")[1]
                         .split(":")[1]
                     ),
                 ),
                 right_entity=EntityAnnotationForRelation(
-                    text=re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[0]
+                    text=re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[0]
                     .split("=")[1]
                     .replace('"', ""),
                     start_line=int(
-                        re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[1]
+                        re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[1]
                         .split(" ")[0]
                         .split(":")[0]
                     ),
                     start_word=int(
-                        re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[1]
+                        re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[1]
                         .split(" ")[0]
                         .split(":")[1]
                     ),
                     end_line=int(
-                        re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[1]
+                        re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[1]
                         .split(" ")[1]
                         .split(":")[0]
                     ),
                     end_word=int(
-                        re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[1]
+                        re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[2])[1]
                         .split(" ")[1]
                         .split(":")[1]
                     ),
@@ -312,26 +312,26 @@ class Evaluator:
         try:
             return EntityAnnotation(
                 label=text.split("||")[1].split("=")[1].replace('"', "").replace("\n", ""),
-                text=re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
+                text=re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
                 .split("=")[1]
                 .replace('"', ""),
                 start_line=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                     .split(" ")[0]
                     .split(":")[0]
                 ),
                 start_word=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                     .split(" ")[0]
                     .split(":")[1]
                 ),
                 end_line=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                     .split(" ")[1]
                     .split(":")[0]
                 ),
                 end_word=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                     .split(" ")[1]
                     .split(":")[1]
                 ),
@@ -344,26 +344,26 @@ class Evaluator:
         try:
             return EntityAnnotation(
                 label=text.split("||")[2].split("=")[1].replace('"', "").replace("\n", ""),
-                text=re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
+                text=re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[0]
                 .split("=")[1]
                 .replace('"', ""),
                 start_line=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                     .split(" ")[0]
                     .split(":")[0]
                 ),
                 start_word=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                     .split(" ")[0]
                     .split(":")[1]
                 ),
                 end_line=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                     .split(" ")[1]
                     .split(":")[0]
                 ),
                 end_word=int(
-                    re.split("(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
+                    re.split(r"(\d{1,6}:\d{1,6} \d{1,6}:\d{1,6})", text.split("||")[0])[1]
                     .split(" ")[1]
                     .split(":")[1]
                 ),
