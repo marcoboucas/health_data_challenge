@@ -12,11 +12,9 @@ NER_LABELS = {"problem", "test", "treatment"}
 class BaseNer(ABC):
     """Base Ner."""
 
-    __name__ = "BaseNER"
-
     def __init__(self) -> None:
         """Init."""
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info("Init the NER...")
 
     @abstractmethod
@@ -32,9 +30,10 @@ class BaseNer(ABC):
         """Convert a list of entities to a file, using the conventionnal formating."""
         with open(file_path, "w", encoding="utf-8") as file:
             for entity in entities:
+                escaped_text = entity.text.replace("\n", " ")
                 file.write(
                     (
-                        f'c="{entity.text}" {entity.start_line}:{entity.start_word} '
+                        f'c="{escaped_text}" {entity.start_line}:{entity.start_word} '
                         f"{entity.end_line}:{entity.end_word} "
                         f'||t="{entity.label}"\n'
                     )
