@@ -2,9 +2,7 @@ import os
 
 RANDOM_STATE = 42
 
-###################
-### About paths ###
-###################
+# About paths
 
 ROOT_FOLDER = os.path.join(os.path.dirname(__file__), "..")
 
@@ -24,16 +22,13 @@ TEST_CSV = os.path.join(DATA_FOLDER, "test.csv")
 MODEl_RESULTS_FOLDER = os.path.join(DATA_FOLDER, "results")
 MODELS_WEIGHTS_FOLDER = os.path.join(ROOT_FOLDER, "weights")
 
-###########################
-### About preprocessing ###
-###########################
+
+# About preprocessing
 
 TEST_SIZE = 0.2
 
 
-###########################
-### About Models        ###
-###########################
+# About Models
 
 MEDCAT_ZIP_FILE = os.path.join(WEIGHTS_FOLDER, "medmen_wstatus_2021_oct.zip")
 NER_MEDCAT_WEIGHTS_FILE = os.path.join(MODELS_WEIGHTS_FOLDER, "ner_medcat.pkl")
