@@ -26,14 +26,19 @@ st.markdown("## Health Project")
 
 with st.expander("Model parameters", False):
     with st.form("params"):
-        st.selectbox("NER Model", options=["regex", "medcat"], index=0, key="ner_model")
+        st.selectbox("NER Model", options=["RegexNer", "MedCATNer"], index=0, key="ner_model")
         st.form_submit_button(on_click=load_models)
+
 
 if "dataset" not in st.session_state:
     st.session_state["dataset"] = DatasetLoader(mode="test")
 
 if "ner" not in st.session_state:
     load_models()
+
+
+with st.container():
+    st.markdown(f"Model: {st.session_state.get('ner').__class__.__name__}")
 
 
 st.select_slider(

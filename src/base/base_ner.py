@@ -86,8 +86,9 @@ class BaseNer(ABC):
                     final_output.append(
                         (entity.text, entity.label, self.STREAMLIT_COLORS[entity.label])
                     )
-                    word_idx = entity.end_word
-                final_output.append(words[word_idx:])
+                    word_idx = entity.end_word + 1
+                if word_idx < len(words):
+                    final_output.append(words[word_idx:])
             else:
                 final_output.append(line)
             final_output.append(" \n ")

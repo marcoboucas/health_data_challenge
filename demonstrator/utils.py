@@ -46,12 +46,13 @@ def update_document():
 
 def load_models():
     """Load the Models."""
-    with st.spinner("Loading the NER model"):
-        if st.session_state["ner_model"] == "regex":
-            st.session_state["ner"] = RegexNer(weights_path=config.NER_REGEX_WEIGHTS_FILE)
-        elif st.session_state["ner_model"] == "medcat":
-            st.session_state["ner"] = MedCATNer()
-        else:
-            st.warning("No model selected")
+    if st.session_state.get("ner").__class__.__name__ != st.session_state["ner_model"]:
+        with st.spinner("Loading the NER model"):
+            if st.session_state["ner_model"] == "RegexNer":
+                st.session_state["ner"] = RegexNer(weights_path=config.NER_REGEX_WEIGHTS_FILE)
+            elif st.session_state["ner_model"] == "MedCATNer":
+                st.session_state["ner"] = MedCATNer(weights_path=config.NER_MEDCAT_WEIGHTS_FILE)
+            else:
+                st.warning("No model selected")
 
     update_document()

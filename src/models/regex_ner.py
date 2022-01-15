@@ -55,7 +55,7 @@ class RegexNer(BaseNer):
                         start_line=start_line,
                         end_line=end_line,
                         start_word=start_word,
-                        end_word=end_word,
+                        end_word=end_word + 1,
                     )
                 )
         return tokens
