@@ -53,9 +53,9 @@ class Evaluator:
         print("############# CONCEPT EVALUATION #############")
         f1_concept = self.evaluate_concept()
         print("\n\n############# ASSERTION EVALUATION #############")
-        f1_assertion = self.evaluate_assertion()
+        f1_assertion = self.evaluate_assertion() if self.assertion_prediction_dir != "" else 0.0
         print("\n\n############# RELATION EVALUATION #############")
-        f1_rel = self.evaluate_relation()
+        f1_rel = self.evaluate_relation() if self.relation_prediction_dir != "" else 0.0
         global_score = (f1_concept + f1_assertion + f1_rel) / 3
         print("\n\n############# GLOBAL SCORE #############")
         print(round(global_score, 2))
@@ -197,7 +197,6 @@ class Evaluator:
             entry_tokens = self._load_input_text_file(
                 os.path.join(self.entries_dir, f"{filename.split('.')[0]}.txt")
             )
-
             ground_truth.append(self._build_tokens_annotated(entry_tokens, ground_truth_entities))
             predictions.append(self._build_tokens_annotated(entry_tokens, prediction_entities))
 

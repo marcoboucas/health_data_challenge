@@ -13,10 +13,18 @@ RAW_DATA_FOLDER = os.path.join(DATA_FOLDER, "train_data")
 TEST_DATA_FOLDER = os.path.join(DATA_FOLDER, "val_data")
 WEIGHTS_FOLDER = os.path.join(ROOT_FOLDER, "weights")
 
+TRAIN_DATA_FOLDER = os.path.join(DATA_FOLDER, "train")
+VAL_DATA_FOLDER = os.path.join(DATA_FOLDER, "val")
+
 ALL_DOCUMENTS_CSV = os.path.join(DATA_FOLDER, "all_documents.csv")
 TRAIN_CSV = os.path.join(DATA_FOLDER, "train.csv")
-VALIDATION_CSV = os.path.join(DATA_FOLDER, "validation.csv")
+VAL_CSV = os.path.join(DATA_FOLDER, "val.csv")
 TEST_CSV = os.path.join(DATA_FOLDER, "test.csv")
+
+MODEl_RESULTS_FOLDER = os.path.join(DATA_FOLDER, "results")
+MODELS_WEIGHTS_FOLDER = os.path.join(ROOT_FOLDER, "weights")
+
+NER_REGEX_WEIGHTS_FILE = os.path.join(MODELS_WEIGHTS_FOLDER, "ner_regex.pkl")
 
 ###########################
 ### About preprocessing ###

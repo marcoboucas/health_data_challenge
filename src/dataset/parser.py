@@ -51,11 +51,11 @@ class Parser:
         return dict(formated_text)
 
     @staticmethod
-    def get_raw_text(raw_text_path: str) -> List[str]:
+    def get_raw_text(raw_text_path: str) -> str:
         """Return the raw text."""
-        with open(raw_text_path, "r", encoding="utf-8") as raw:
-            lines = raw.readlines()
-        return lines
+        with open(raw_text_path, "r", encoding="utf-8") as file:
+            text = file.read()
+        return text
 
 
 def is_section_title(line: str) -> bool:

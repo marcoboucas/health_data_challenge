@@ -17,6 +17,9 @@ pip install -r dev.requirements.txt
 ```
 
 - For MedSpacy, you need to install some weights here: https://medcat.rosalind.kcl.ac.uk/media/medmen_wstatus_2021_oct.zip, you can put them in the `./weights` folder.
+
+## Training models
+- For the Regex NER, you can do `python -m src.models.regex_ner`
 ### Access to data
 
 Ask to your coach.
