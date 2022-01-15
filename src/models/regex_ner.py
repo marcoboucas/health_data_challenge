@@ -41,20 +41,21 @@ class RegexNer(BaseNer):
         """Extract entities for one file."""
         tokens = []
         # We suppose an entity can be found only on one line
-        for i, line in enumerate(text.split("\n")):
-            for match in self.weights.pattern.finditer(line):
-                label = self.find_token_label(match.group(0))
-                if label in NER_LABELS:
-                    tokens.append(
-                        EntityAnnotation(
-                            label=label,
-                            text=match.group(0),
-                            start_line=i,
-                            end_line=i,
-                            start_word=match.start(),
-                            end_word=match.end(),
-                        )
+        for match in self.weights.pattern.finditer(text):
+            label = self.find_token_label(match.group(0))
+            start_line, start_word = self.character_to_line_and_word(text, match.start())
+            end_line, end_word = self.character_to_line_and_word(text, match.end())
+            if label in NER_LABELS:
+                tokens.append(
+                    EntityAnnotation(
+                        label=label,
+                        text=match.group(0),
+                        start_line=start_line,
+                        end_line=end_line,
+                        start_word=start_word,
+                        end_word=end_word,
                     )
+                )
         return tokens
 
     def load_from_weights(self, weights_path: str = config.NER_REGEX_WEIGHTS_FILE) -> None:
@@ -76,7 +77,6 @@ class RegexNer(BaseNer):
             for token in annotation:
                 if token.label in NER_LABELS:
                     if len(token.text.strip()) > 2:
-                        print(token.text, token.label)
                         getattr(self.weights, token.label).add(token.text.lower())
         # Generate the patterns
         self.weights.pattern = re.compile(

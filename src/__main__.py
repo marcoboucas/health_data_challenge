@@ -64,7 +64,10 @@ class CLI:
                 )
 
     def eval(self, dataset: str = "train", results_path: Optional[str] = None) -> None:
-        """Evaluate the model results."""
+        """Evaluate the model results.
+
+        `python -m src eval --dataset=train`
+        """
         if results_path is None:
             results_path = os.path.join(
                 config.MODEl_RESULTS_FOLDER,
