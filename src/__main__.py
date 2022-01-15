@@ -11,10 +11,7 @@ from src.base.base_ner import BaseNer
 from src.dataset.dataset_loader import DataInstance, DatasetLoader
 from src.evaluation.eval import Evaluator
 from src.models.medcat_ner import MedCATNer
-from src.models.regex_ner import (  # pylint: disable=unused-import
-    RegexNer,
-    RegexNerWeights,
-)
+from src.models.regex_ner import RegexNer
 
 
 # pylint: disable=too-few-public-methods,no-self-use

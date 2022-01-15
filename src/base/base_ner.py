@@ -2,7 +2,8 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from collections import defaultdict
+from typing import List, Tuple, Union
 
 from src.types import EntityAnnotation
 
@@ -11,6 +12,12 @@ NER_LABELS = {"problem", "test", "treatment"}
 
 class BaseNer(ABC):
     """Base Ner."""
+
+    STREAMLIT_COLORS = {
+        "problem": "#faa",
+        "test": "#8ef",
+        "treatment": "#fea",
+    }
 
     def __init__(self) -> None:
         """Init."""
@@ -46,10 +53,8 @@ class BaseNer(ABC):
         - The line (starts at 1)
         - The word position (starts at 0)
         """
-        lines = text.split("\n")
-
         text_length = 0
-        for line_num, line in enumerate(lines):
+        for line_num, line in enumerate(text.split("\n")):
             if character_position < text_length + (len(line) + 1):
                 line_length = 0
                 for word_position, word in enumerate(line.split(" ")):
@@ -61,3 +66,30 @@ class BaseNer(ABC):
             text_length += len(line) + 1  # line length + \n char
 
         return -1, -1
+
+    def convert_to_streamlit_output(
+        self, text: str, entities: List[EntityAnnotation]
+    ) -> List[Union[str, Tuple[str, str, str]]]:
+        """Convert to the streamlit output."""
+        # Convert the entities line_idx, word_idx to their character_position
+        entities_per_line = defaultdict(list)
+        for entity in entities:
+            entities_per_line[entity.start_line - 1].append(entity)
+
+        final_output = []
+        for line_num, line in enumerate(text.split("\n")):
+            if line_num in entities_per_line:
+                words = line.split(" ")
+                word_idx = 0
+                for entity in entities_per_line[line_num]:
+                    final_output.append(" ".join(words[word_idx : entity.start_word]))
+                    final_output.append(
+                        (entity.text, entity.label, self.STREAMLIT_COLORS[entity.label])
+                    )
+                    word_idx = entity.end_word
+                final_output.append(words[word_idx:])
+            else:
+                final_output.append(line)
+            final_output.append(" \n ")
+
+        return final_output
