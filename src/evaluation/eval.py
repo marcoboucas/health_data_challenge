@@ -197,7 +197,7 @@ class Evaluator:
             entry_tokens = self._load_input_text_file(
                 os.path.join(self.entries_dir, f"{filename.split('.')[0]}.txt")
             )
-
+            print(prediction_entities[:2], ground_truth_entities[:2])
             ground_truth.append(self._build_tokens_annotated(entry_tokens, ground_truth_entities))
             predictions.append(self._build_tokens_annotated(entry_tokens, prediction_entities))
 
@@ -237,6 +237,7 @@ class Evaluator:
     @staticmethod
     def _load_input_text_file(path: str) -> List[List[Token]]:
         tokens = []
+        print(path)
         with open(path, "r", encoding="utf-8") as input_file:
             for i, line in enumerate(input_file.readlines()):
                 tokens.append(

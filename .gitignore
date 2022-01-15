@@ -143,5 +143,6 @@ data/*
 *.pdf
 .vscode
 .DS_Store
-*.zip
 test.json
+tmp
+*.zip

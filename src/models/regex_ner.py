@@ -75,11 +75,19 @@ class RegexNer(BaseNer):
         for annotation in annotations:
             for token in annotation:
                 if token.label in NER_LABELS:
-                    getattr(self.weights, token.label).add(token.text.lower())
+                    if len(token.text.strip()) > 2:
+                        print(token.text, token.label)
+                        getattr(self.weights, token.label).add(token.text.lower())
         # Generate the patterns
         self.weights.pattern = re.compile(
             r"("
-            + r"|".join(self.weights.test | self.weights.problem | self.weights.treatment)
+            + r"|".join(
+                list(
+                    map(
+                        re.escape, self.weights.test | self.weights.problem | self.weights.treatment
+                    )
+                )
+            )
             + r")",
             flags=re.IGNORECASE,
         )
@@ -97,12 +105,13 @@ if __name__ == "__main__":
     import logging
     from pprint import pprint
 
+    from src.dataset.dataset_loader import DatasetLoader
+
     logging.basicConfig(level=logging.INFO)
     ner = RegexNer()
-
-    ner.train([[Token("test", "electrocardiogram", 10, 1), Token("problem", "cough", 13, 1)]])
-
-    pprint(
-        ner.extract_entities(["I had an electrocardiogram\n and bad cough", "I have a tough cough"])
-    )
+    logging.info("Training the model !")
+    train_set = DatasetLoader(mode="train")
+    ner.train([train_set[i].annotation_concept for i in range(len(train_set))])
+    logging.info("Training done !")
+    pprint(ner.extract_entities(["I have pain in my lower body"]))
     ner.save_weights()

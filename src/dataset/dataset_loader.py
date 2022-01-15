@@ -1,6 +1,6 @@
 """Dataset loader"""
-from dataclasses import asdict, dataclass
-from typing import Dict, List
+from dataclasses import asdict, dataclass, field
+from typing import Dict, List, Literal
 
 import pandas as pd
 
@@ -17,18 +17,23 @@ class DataInstance:
     name: str
     raw_text: str
     formated_text: Dict[str, str]
-    annotation_relation: List[RelationAnnotation]
-    annotation_concept: List[EntityAnnotation]
-    annotation_assertion: List[EntityAnnotation]
+    annotation_relation: List[RelationAnnotation] = field(default_factory=list)
+    annotation_concept: List[EntityAnnotation] = field(default_factory=list)
+    annotation_assertion: List[EntityAnnotation] = field(default_factory=list)
 
 
 class DatasetLoader:
     """Load the dataset"""
 
-    def __init__(self, train: bool = True) -> None:
+    def __init__(self, mode: Literal["train", "val", "test"] = "train") -> None:
         self.columns = ["name", "path", "concept", "ast", "rel"]
         self.parser = Parser()
-        self.data_frame = pd.read_csv(config.TRAIN_CSV if train else config.TEST_CSV, index_col=0)
+        if mode == "train":
+            self.data_frame = pd.read_csv(config.TRAIN_CSV)
+        elif mode == "val":
+            self.data_frame = pd.read_csv(config.VAL_CSV)
+        else:
+            self.data_frame = pd.read_csv(config.TEST_CSV)
 
     def __len__(self) -> int:
         """Dataset length"""
@@ -40,11 +45,17 @@ class DatasetLoader:
         return DataInstance(
             identifier=str(patient.name),
             name=patient["name"],
-            formated_text=self.parser.parse_raw_text(patient["path"]),
-            raw_text=self.parser.get_raw_text(patient["path"]),
-            annotation_concept=self.parser.parse_annotation_concept(patient["concept"]),
-            annotation_relation=self.parser.parse_annotation_relation(patient["rel"]),
-            annotation_assertion=self.parser.parse_annotation_assertion(patient["ast"]),
+            formated_text=self.parser.parse_raw_text(patient["txt"]),
+            raw_text=self.parser.get_raw_text(patient["txt"]),
+            annotation_concept=self.parser.parse_annotation_concept(patient["concept"])
+            if "concept" in patient
+            else [],
+            annotation_relation=self.parser.parse_annotation_relation(patient["rel"])
+            if "rel" in patient
+            else [],
+            annotation_assertion=self.parser.parse_annotation_assertion(patient["ast"])
+            if "ast" in patient
+            else [],
         )
 
 
