@@ -16,6 +16,7 @@ The script eval.py allows you to evaluate your approach to the first part of the
 pip install -r dev.requirements.txt
 ```
 
+- For MedSpacy, you need to install some weights here: https://medcat.rosalind.kcl.ac.uk/media/medmen_wstatus_2021_oct.zip, you can put them in the `./weights` folder.
 ### Access to data
 
 Ask to your coach.
