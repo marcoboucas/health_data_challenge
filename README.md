@@ -6,7 +6,7 @@ The script eval.py allows you to evaluate your approach to the first part of the
 ## Installation
 
 ### Prerequisites
-* python 3.7.6
+* python 3.8
 * pip
 * Knowledge of one of python virtual environments
 
