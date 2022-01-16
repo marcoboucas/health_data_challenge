@@ -4,6 +4,17 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+class AssertionValue(Enum):
+    """Value for the assertion class."""
+
+    PRESENT = "present"
+    ABSENT = "absent"
+    POSSIBLE = "possible"
+    CONDITIONAL = "conditional"
+    HYPOTHETICAL = "hypothetical"
+    NOT_PATIENT = "associated_with_someone_else"
+
+
 @dataclass
 class Token:
     """One token (entity for NER)."""

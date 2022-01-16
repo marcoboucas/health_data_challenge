@@ -35,6 +35,7 @@ class BaseNer(ABC):
     @staticmethod
     def entities_to_file(entities: List[EntityAnnotation], file_path: str) -> None:
         """Convert a list of entities to a file, using the conventionnal formating."""
+        assert file_path.endswith(".con"), "The file must be a .con file"
         with open(file_path, "w", encoding="utf-8") as file:
             for entity in entities:
                 escaped_text = entity.text.replace("\n", " ")
