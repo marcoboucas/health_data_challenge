@@ -10,6 +10,7 @@ from src import config
 from src.base.base_ner import BaseNer
 from src.dataset.dataset_loader import DataInstance, DatasetLoader
 from src.evaluation.eval import Evaluator
+from src.models.medcat_ner import MedCATNer
 from src.models.regex_ner import (  # pylint: disable=unused-import
     RegexNer,
     RegexNerWeights,
@@ -23,7 +24,7 @@ class CLI:
     def ner(
         self,
         dataset: Literal["train", "test", "val"],
-        model_name: Literal["regex"] = "regex",
+        model_name: Literal["regex", "medcat"] = "regex",
         model_path: Optional[str] = None,
     ) -> None:
         """Generate the NER results for one dataset.
@@ -45,7 +46,10 @@ class CLI:
         ner: BaseNer
         if model_name == "regex":
 
-            ner = RegexNer(weights_path=model_path)
+            ner = RegexNer(weights_path=model_path or config.NER_REGEX_WEIGHTS_FILE)
+        elif model_name == "medcat":
+
+            ner = MedCATNer(weights_path=model_path or config.NER_MEDCAT_WEIGHTS_FILE)
         else:
             raise ValueError(f"No '{model_name}' NER model")
 

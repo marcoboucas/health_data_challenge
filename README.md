@@ -19,7 +19,9 @@ The script eval.py allows you to evaluate your approach to the first part of the
 - For MedSpacy, you need to install some weights here: https://medcat.rosalind.kcl.ac.uk/media/medmen_wstatus_2021_oct.zip, you can put them in the `./weights` folder.
 
 ## Training models
+### NER
 - For the Regex NER, you can do `python -m src.models.regex_ner`
+- For the Medcat NER, you can do `python -m src.models.medcat_ner`
 ### Access to data
 
 Ask to your coach.

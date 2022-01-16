@@ -1,9 +1,10 @@
 """MedCAT NER."""
 
+import operator
 import os
 import pickle
 from collections import defaultdict
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from medcat.cat import CAT
 
@@ -15,11 +16,17 @@ from src.types import EntityAnnotation, Token
 class MedCATNer(BaseNer):
     """NER using MedCat NER."""
 
-    def __init__(self, model_path: Optional[str] = config.MEDCAT_ZIP_FILE) -> None:
+    def __init__(
+        self,
+        model_path: Optional[str] = config.MEDCAT_ZIP_FILE,
+        weights_path: Optional[str] = config.NER_MEDCAT_WEIGHTS_FILE,
+    ) -> None:
         """Init."""
         super().__init__()
         self.cat = CAT.load_model_pack(model_path)  # type: ignore
-        self.label_mapping = defaultdict(lambda: defaultdict(lambda: 0))
+        # Convert the label of medcat to a 'test', 'problem', 'treatment'
+        self.label_mapping: Dict[str, str] = {}
+        self.load_from_weights(weights_path)
 
     def extract_entities(self, texts: List[str]) -> List[List[EntityAnnotation]]:
         """Extract entities from a list of texts."""
@@ -28,7 +35,7 @@ class MedCATNer(BaseNer):
             current_entities = []
             entities = self.cat.get_entities(text)
             for elem in entities["entities"].values():
-                label = self.__find_type_label(elem["types"][0])
+                label = self.label_mapping.get(elem["types"][0])
                 if not label:  # Invalid label
                     continue
                 name = elem["source_value"]
@@ -52,45 +59,42 @@ class MedCATNer(BaseNer):
 
     def train(self, annotations: List[List[Union[Token, EntityAnnotation]]]) -> None:
         """Train the model."""
+        labels_mapping_count = defaultdict(lambda: defaultdict(lambda: 0))
         for annotation in annotations:
             for token in annotation:
-                entities = self.cat.get_entities(token.text)
+                entities = self.cat.get_entities(token.text)["entities"].values()
                 for elem in entities:
                     for type_ in elem["types"]:
-                        self.label_mapping[type_][token.label] += 1
+                        labels_mapping_count[type_][token.label] += 1
+        self.logger.info("Training completed... Converting the label mapping to dict")
+        # For each NER label, find the relevant tag based on the count
+        self.label_mapping = {
+            key: list(sorted(value.items(), key=operator.itemgetter(1), reverse=True))[0][0]
+            for key, value in labels_mapping_count.items()
+        }
 
-    def __find_type_label(self, type_: str) -> str:
-        """Find type label."""
-        best_label = ""
-        for label, count in self.label_mapping[type_].items():
-            if count > self.label_mapping[type_].get(best_label, -1):
-                best_label = label
-
-        return best_label
-
-    def save_weights(self, weights_path: str) -> None:
+    def save_weights(self, weights_path: str = config.NER_MEDCAT_WEIGHTS_FILE) -> None:
         """Save the weights in a file."""
         with open(weights_path, "wb") as file:
             pickle.dump(self.label_mapping, file)
 
-    def load_from_weights(self, weights_path: str) -> None:
+    def load_from_weights(self, weights_path: str = config.NER_MEDCAT_WEIGHTS_FILE) -> None:
         """Load the weights."""
         if not os.path.isfile(weights_path):
-            self.logger.warning("No file found here: '%s'", weights_path)
+            self.logger.warning("Can't find the weights: '%s'", weights_path)
             return
         with open(weights_path, "rb") as file:
             self.label_mapping = pickle.load(file)
 
 
 if __name__ == "__main__":
+    # pylint: disable=ungrouped-imports
+    from tqdm import tqdm
+
+    from src.dataset.dataset_loader import DatasetLoader
+
+    dataset = DatasetLoader("train")
     ner = MedCATNer()
-    print(
-        ner.extract_entities(
-            [
-                (
-                    "right parietal occipital craniotomy and"
-                    " debulking of tumor using stulz neuro navigation"
-                )
-            ]
-        )
-    )
+    for i in tqdm(range(len(dataset))):
+        ner.train([dataset[i].annotation_concept])
+    ner.save_weights()
