@@ -14,3 +14,7 @@ install-streamlit:
 
 demo: install-streamlit
 	streamlit run demonstrator/__main__.py
+
+
+run:
+	python -m src run --dataset=train --ner_name=regex --ner_path=./weights/ner_regex.pkl --assessor_name=random

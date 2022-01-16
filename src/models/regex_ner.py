@@ -55,7 +55,7 @@ class RegexNer(BaseNer):
                         start_line=start_line,
                         end_line=end_line,
                         start_word=start_word,
-                        end_word=end_word + 1,
+                        end_word=end_word,
                     )
                 )
         return tokens
@@ -86,7 +86,8 @@ class RegexNer(BaseNer):
             + r"|".join(
                 list(
                     map(
-                        re.escape, self.weights.test | self.weights.problem | self.weights.treatment
+                        self.escape_characters,
+                        self.weights.test | self.weights.problem | self.weights.treatment,
                     )
                 )
             )
@@ -101,6 +102,11 @@ class RegexNer(BaseNer):
             if x in getattr(self.weights, label):
                 return label
         return "no_label"
+
+    @staticmethod
+    def escape_characters(text: str) -> str:
+        """Escape characters."""
+        return re.escape(text).strip()
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ class AssertionValue(Enum):
     CONDITIONAL = "conditional"
     HYPOTHETICAL = "hypothetical"
     NOT_PATIENT = "associated_with_someone_else"
+    O_TOKEN = "O_TOKEN"
 
 
 @dataclass

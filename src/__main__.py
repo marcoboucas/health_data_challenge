@@ -21,12 +21,10 @@ class CLI:
         ner_name: Literal["regex", "medcat"] = "regex",
         ner_path: Optional[str] = None,
         assessor_name: Literal["random"] = "random",
-        size: int = -1,
     ) -> None:
         """Generate the NER results for one dataset.
 
-        `python -m src run --dataset=train --ner_name=regex --ner_path=./weights/ner_regex.pkl
-                            --assessor_name=random`
+        `make run`
         """
         # Prepare the folders and data
         dataset_loader = DatasetLoader(dataset)
@@ -54,9 +52,7 @@ class CLI:
         assessor = get_assessor(assessor_name)
 
         dataset_instance: DataInstance
-        for idx, dataset_instance in tqdm(enumerate(dataset_loader)):
-            if size != -1 and idx >= size:
-                break
+        for dataset_instance in tqdm(dataset_loader):
             # Find the concepts
             ner_file_path = os.path.join(
                 ner_results_path,

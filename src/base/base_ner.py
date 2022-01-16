@@ -60,7 +60,7 @@ class BaseNer(ABC):
                 line_length = 0
                 for word_position, word in enumerate(line.split(" ")):
                     if character_position <= text_length + line_length + len(word):
-                        return line_num + 1, word_position
+                        return line_num + 1, min(word_position, len(line.split(" ")) - 1)
 
                     line_length += len(word) + 1  # word length + ' '
 
