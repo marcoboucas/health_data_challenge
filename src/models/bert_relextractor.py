@@ -1,11 +1,18 @@
 """Random Relation Extractor."""
 
+import os
 from random import choice
 from typing import List
 
 import numpy as np
 import torch
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    classification_report,
+    confusion_matrix,
+)
 
+from src import config
 from src.base.base_relextractor import BaseRelExtractor
 from src.dataset.rel_dataset import RelDataset
 from src.types import (
@@ -58,6 +65,7 @@ class RandomRelExtractor(BaseRelExtractor):
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     from transformers import (
         AutoConfig,
         AutoModelForSequenceClassification,
@@ -69,12 +77,14 @@ if __name__ == "__main__":
         set_seed,
     )
 
+    CHECKPOINTS_FOLDER = os.path.join(config.WEIGHTS_FOLDER, "relextractor_bert")
     training_args = TrainingArguments(
-        output_dir=".",
+        output_dir=CHECKPOINTS_FOLDER,
         learning_rate=1e-4,
         weight_decay=0.01,
-        num_train_epochs=1,
+        num_train_epochs=5,
         seed=666,
+        per_device_train_batch_size=8,
     )
 
     MODEL_NAME = "distilbert-base-uncased"
@@ -106,7 +116,7 @@ if __name__ == "__main__":
 
     data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
 
-    def preprocess_dataset(dataset):
+    def preprocess_dataset(dataset, size: int = -1):
         """Preprocess a function"""
         outputs = []
         for element in dataset:
@@ -120,9 +130,12 @@ if __name__ == "__main__":
                     tokenized_text = tokenizer(final_text, padding="max_length", truncation=True)
                     tokenized_text["labels"] = [label_to_id[relation.label.value]]
                     outputs.append(tokenized_text)
+            if size != -1 and len(outputs) > size:
+                break
         return outputs
 
     train_dataset = preprocess_dataset(RelDataset("train"))
+    print(f"Training on {len(train_dataset)} elements")
 
     set_seed(training_args.seed)
     print(torch.cuda.is_available())
@@ -138,4 +151,30 @@ if __name__ == "__main__":
 
     train_result = trainer.train()
     metrics = train_result.metrics
+    metrics["train_samples"] = len(train_dataset)
+    trainer.save_model()
+    trainer.log_metrics("train", metrics)
+    trainer.save_metrics("train", metrics)
+    trainer.save_state()
+
     print(metrics)
+
+    # Evaluation
+    print("EVALUATION")
+    val_dataset = preprocess_dataset(RelDataset("val"))
+
+    true_values = np.array([id_to_label[x["labels"][0]] for x in val_dataset])
+    predictions = trainer.predict(val_dataset, metric_key_prefix="predict").predictions
+    predictions = np.argmax(predictions, axis=1)
+    predictions = [id_to_label[x] for x in predictions]
+
+    print(classification_report(true_values, predictions, labels=labels_list))
+
+    ConfusionMatrixDisplay(
+        confusion_matrix=confusion_matrix(
+            true_values, predictions, labels=labels_list, normalize="true"
+        ),
+        display_labels=labels_list,
+    ).plot()
+
+    plt.show()
