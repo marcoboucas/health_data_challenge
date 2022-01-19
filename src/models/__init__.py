@@ -7,6 +7,7 @@
 from src import config
 from src.base.base_assessor import BaseAssessor
 from src.base.base_ner import BaseNer
+from src.base.base_relextractor import BaseRelExtractor
 
 
 def get_ner(ner_name: str, ner_path: str = None) -> BaseNer:
@@ -43,3 +44,16 @@ def get_assessor(assessor_name: str) -> BaseAssessor:
     else:
         raise ValueError(f"No '{assessor_name}' Assessor model")
     return assessor
+
+
+def get_relextractor(extractor_name: str) -> BaseRelExtractor:
+    """Get the requested relation extractor."""
+    extractor: BaseRelExtractor
+
+    if extractor_name == "random":
+        from src.models.random_relextractor import RandomRelExtractor
+
+        extractor = RandomRelExtractor()
+    else:
+        raise ValueError(f"No '{extractor_name}' Relation Extractor model")
+    return extractor
