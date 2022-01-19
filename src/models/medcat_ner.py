@@ -95,6 +95,5 @@ if __name__ == "__main__":
 
     dataset = DatasetLoader("train")
     ner = MedCATNer()
-    for i in tqdm(range(len(dataset))):
-        ner.train([dataset[i].annotation_concept])
+    ner.train([dataset[i].annotation_concept for i in tqdm(range(len(dataset)))])
     ner.save_weights()

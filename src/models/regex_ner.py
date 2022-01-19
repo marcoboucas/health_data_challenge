@@ -79,7 +79,7 @@ class RegexNer(BaseNer):
             for token in annotation:
                 if token.label in NER_LABELS:
                     if len(token.text.strip()) > 2:
-                        getattr(self.weights, token.label).add(token.text.lower())
+                        getattr(self.weights, token.label).add(token.text.lower().strip("\n "))
         # Generate the patterns
         self.weights.pattern = re.compile(
             r"("
@@ -106,7 +106,7 @@ class RegexNer(BaseNer):
     @staticmethod
     def escape_characters(text: str) -> str:
         """Escape characters."""
-        return re.escape(text).strip()
+        return re.escape(text)
 
 
 if __name__ == "__main__":
@@ -121,5 +121,5 @@ if __name__ == "__main__":
     train_set = DatasetLoader(mode="train")
     ner.train([train_set[i].annotation_concept for i in range(len(train_set))])
     logging.info("Training done !")
-    pprint(ner.extract_entities(["I have pain in my lower body"]))
+    pprint(ner.extract_entities(["I have pain in my lower body, tramadol"]))
     ner.save_weights()
