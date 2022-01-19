@@ -3,6 +3,7 @@ from pprint import pprint
 from typing import List
 
 import numpy as np
+from tqdm import tqdm
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from src.base.base_assessor import BaseAssessor
@@ -24,7 +25,7 @@ class BertAssertionnNER(BaseAssessor):
     ) -> List[List[EntityAnnotation]]:
         """Assertion prediction functions"""
         assertion_labels = []
-        for text, entities_of_text in zip(texts, entities):
+        for text, entities_of_text in tqdm(zip(texts, entities), total=len(entities)):
             text = self.format_text(text, entities_of_text).split("\n")
             tokenized_input = self.tokenizer(text, return_tensors="pt", padding=True)
             output = self.model(**tokenized_input)
@@ -50,6 +51,12 @@ class BertAssertionnNER(BaseAssessor):
             )
             for label, entity in zip(labels, entities)
         ]
+
+    def train(self):
+        """Train model"""
+
+    def tokenize_for_train(self):
+        """Tokenize"""
 
     @staticmethod
     def get_label(label: int) -> str:
