@@ -9,7 +9,7 @@ from tqdm import tqdm
 from src import config
 from src.dataset.dataset_loader import DataInstance, DatasetLoader
 from src.evaluation.eval import Evaluator
-from src.models import get_assessor, get_ner, get_relextractor
+from src.models import get_assessor, get_ner, get_relation_extractor
 
 
 class CLI:
@@ -22,7 +22,8 @@ class CLI:
         ner_name: Literal["regex", "medcat", "bert"] = "regex",
         ner_path: Optional[str] = None,
         assessor_name: Literal["random", "bert"] = "random",
-        relextractor_name: Literal["random"] = "random",
+        relation_extractor_name: Literal["random", "huggingface"] = "random",
+        relation_extractor_path: Optional[str] = None,
     ) -> None:
         """Generate the NER results for one dataset.
 
@@ -58,7 +59,7 @@ class CLI:
         # Load the models (NER, assessor, relation extractor)
         ner = get_ner(ner_name, ner_path)
         assessor = get_assessor(assessor_name)
-        relextractor = get_relextractor(relextractor_name)
+        relextractor = get_relation_extractor(relation_extractor_name, relation_extractor_path)
 
         dataset_instance: DataInstance
         for dataset_instance in tqdm(dataset_loader):

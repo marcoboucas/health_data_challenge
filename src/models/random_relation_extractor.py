@@ -3,7 +3,7 @@
 from random import choice
 from typing import List
 
-from src.base.base_relextractor import BaseRelExtractor
+from src.base.base_relation_extractor import BaseRelExtractor
 from src.types import (
     EntityAnnotation,
     EntityAnnotationForRelation,
@@ -30,7 +30,7 @@ class RandomRelExtractor(BaseRelExtractor):
         """Find one relation type."""
         relations = []
 
-        for _, entities_in_relation in self.find_interesting_lines(text, entities):
+        for _, entities_in_relation in self.find_interesting_lines_from_entities(text, entities):
             for ent1, ent2 in entities_in_relation:
                 relations.append(
                     RelationAnnotation(

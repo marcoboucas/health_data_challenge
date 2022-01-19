@@ -11,7 +11,7 @@ class RelDataset(DatasetLoader):
     """Relation dataset."""
 
     @staticmethod
-    def find_interesting_lines(
+    def find_interesting_lines_from_relations(
         text: str, relations: List[RelationAnnotation]
     ) -> List[Tuple[str, List[RelationAnnotation]]]:
         """Find the interesting lines for relations."""
@@ -36,4 +36,4 @@ class RelDataset(DatasetLoader):
         text = self.parser.get_raw_text(patient["txt"])
         relations = self.parser.parse_annotation_relation(patient["rel"])
 
-        return self.find_interesting_lines(text, relations)
+        return self.find_interesting_lines_from_relations(text, relations)

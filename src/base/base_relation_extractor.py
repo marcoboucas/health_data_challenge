@@ -47,7 +47,7 @@ class BaseRelExtractor(ABC):
                 )
 
     @staticmethod
-    def find_interesting_lines(
+    def find_interesting_lines_from_entities(
         text: str, entities: List[EntityAnnotation]
     ) -> List[Tuple[str, List[Tuple[EntityAnnotation, EntityAnnotation]]]]:
         """Find the interesting lines for relations."""
@@ -66,10 +66,17 @@ class BaseRelExtractor(ABC):
             # It's an interesting line !
             line = lines[line_idx - 1]
             entities_in_relation = []
+
             for problem in line_problems:
                 for other_entity in line_entities:
                     if problem.start_word == other_entity.start_word:
                         continue
+                    # Remove duplicates (because both problems)
+                    if (
+                        other_entity.label == "problem"
+                        and other_entity.start_word < problem.start_word
+                    ):
+                        break
 
                     entities_in_relation.append((problem, other_entity))
             interesting_lines.append((line, entities_in_relation))
