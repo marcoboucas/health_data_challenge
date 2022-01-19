@@ -20,7 +20,7 @@ class CLI:
         dataset: Literal["train", "test", "val"],
         ner_name: Literal["regex", "medcat"] = "regex",
         ner_path: Optional[str] = None,
-        assessor_name: Literal["random"] = "random",
+        assessor_name: Literal["random", "bert"] = "bert",
     ) -> None:
         """Generate the NER results for one dataset.
 
