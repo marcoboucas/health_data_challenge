@@ -25,15 +25,16 @@ class DataInstance:
 class DatasetLoader:
     """Load the dataset"""
 
-    def __init__(self, mode: Literal["train", "val", "test"] = "train") -> None:
+    def __init__(self, mode: Literal["train", "val", "test"] = "train", size: int = -1) -> None:
+        self.size = size
         self.columns = ["name", "path", "concept", "ast", "rel"]
         self.parser = Parser()
         if mode == "train":
-            self.data_frame = pd.read_csv(config.TRAIN_CSV)
+            self.data_frame = pd.read_csv(config.TRAIN_CSV).head(self.size)
         elif mode == "val":
-            self.data_frame = pd.read_csv(config.VAL_CSV)
+            self.data_frame = pd.read_csv(config.VAL_CSV).head(self.size)
         else:
-            self.data_frame = pd.read_csv(config.TEST_CSV)
+            self.data_frame = pd.read_csv(config.TEST_CSV).head(self.size)
 
     def __len__(self) -> int:
         """Dataset length"""

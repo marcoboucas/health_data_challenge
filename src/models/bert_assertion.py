@@ -30,7 +30,6 @@ class BertAssertionnNER(BaseAssessor):
             tokenized_input = self.tokenizer(text, return_tensors="pt", padding=True)
             output = self.model(**tokenized_input)
             predicted_label = np.argmax(output.logits.detach().numpy(), axis=1)  ## 1 == ABSENT
-            # print(predicted_label)
             assertion_labels.append(self.format_assess_entities(predicted_label, entities_of_text))
 
         return assertion_labels
