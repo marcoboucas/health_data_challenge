@@ -266,11 +266,11 @@ class BertNer(BaseNer):
 
         # Remove ignored index (special tokens)
         true_predictions = [
-            [self.LABEL_LIST[p] for (p, l) in zip(prediction, label) if l != -100]
+            [self.LABEL_LIST[pred] for (pred, lab) in zip(prediction, label) if lab != -100]
             for prediction, label in zip(predictions, labels)
         ]
         true_labels = [
-            [self.LABEL_LIST[l] for (p, l) in zip(prediction, label) if l != -100]
+            [self.LABEL_LIST[lab] for (_, lab) in zip(prediction, label) if lab != -100]
             for prediction, label in zip(predictions, labels)
         ]
 
