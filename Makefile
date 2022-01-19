@@ -8,3 +8,13 @@ install-dev: install
 lint:
 	python -m pylint src
 	python -m flake8 src
+
+install-streamlit:
+	pip install streamlit==1.2.0 st-annotated-text==2.0.0 --quiet
+
+demo: install-streamlit
+	streamlit run demonstrator/__main__.py
+
+
+run:
+	python -m src run --dataset=train --ner_name=regex --ner_path=./weights/ner_regex.pkl --assessor_name=random

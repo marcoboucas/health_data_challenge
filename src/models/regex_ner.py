@@ -3,8 +3,10 @@
 import os
 import pickle
 import re
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import List, Optional, Set, Union
+
+import dacite
 
 from src import config
 from src.base.base_ner import NER_LABELS, BaseNer
@@ -64,12 +66,12 @@ class RegexNer(BaseNer):
             self.logger.warning("No file found here: '%s'", weights_path)
             return
         with open(weights_path, "rb") as file:
-            self.weights = pickle.load(file)
+            self.weights = dacite.from_dict(RegexNerWeights, pickle.load(file))
 
     def save_weights(self, weights_path: str = config.NER_REGEX_WEIGHTS_FILE) -> None:
         """Save the weights in a file."""
         with open(weights_path, "wb") as file:
-            pickle.dump(self.weights, file)
+            pickle.dump(asdict(self.weights), file)
 
     def train(self, annotations: List[List[Union[Token, EntityAnnotation]]]) -> None:
         """Train the model."""
@@ -84,7 +86,8 @@ class RegexNer(BaseNer):
             + r"|".join(
                 list(
                     map(
-                        re.escape, self.weights.test | self.weights.problem | self.weights.treatment
+                        self.escape_characters,
+                        self.weights.test | self.weights.problem | self.weights.treatment,
                     )
                 )
             )
@@ -99,6 +102,11 @@ class RegexNer(BaseNer):
             if x in getattr(self.weights, label):
                 return label
         return "no_label"
+
+    @staticmethod
+    def escape_characters(text: str) -> str:
+        """Escape characters."""
+        return re.escape(text).strip()
 
 
 if __name__ == "__main__":

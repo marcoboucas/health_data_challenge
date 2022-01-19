@@ -1,5 +1,5 @@
 """Main."""
-
+# pylint: disable=too-few-public-methods,no-self-use,too-many-arguments,too-many-locals
 import os
 from shutil import rmtree
 from typing import Literal, Optional
@@ -7,61 +7,74 @@ from typing import Literal, Optional
 from tqdm import tqdm
 
 from src import config
-from src.base.base_ner import BaseNer
 from src.dataset.dataset_loader import DataInstance, DatasetLoader
 from src.evaluation.eval import Evaluator
-from src.models.medcat_ner import MedCATNer
-from src.models.regex_ner import (  # pylint: disable=unused-import
-    RegexNer,
-    RegexNerWeights,
-)
+from src.models import get_assessor, get_ner
 
 
-# pylint: disable=too-few-public-methods,no-self-use
 class CLI:
     """CLI."""
 
-    def ner(
+    def run(
         self,
         dataset: Literal["train", "test", "val"],
-        model_name: Literal["regex", "medcat"] = "regex",
-        model_path: Optional[str] = None,
+        ner_name: Literal["regex", "medcat"] = "regex",
+        ner_path: Optional[str] = None,
+        assessor_name: Literal["random"] = "random",
     ) -> None:
         """Generate the NER results for one dataset.
 
-        `python -m src ner --dataset=train --model_name=regex --model_path=./weights/ner_regex.pkl`
+        `make run`
         """
-        # Prepare the folder and data
+        # Prepare the folders and data
         dataset_loader = DatasetLoader(dataset)
         ner_results_path = os.path.join(
             config.MODEl_RESULTS_FOLDER,
             dataset,
             "ner_results",
         )
+        assessor_results_path = os.path.join(
+            config.MODEl_RESULTS_FOLDER,
+            dataset,
+            "assessor_results",
+        )
         if os.path.isdir(ner_results_path):
             rmtree(ner_results_path)
-        os.makedirs(ner_results_path, exist_ok=True)
+        os.makedirs(ner_results_path)
+        if os.path.isdir(assessor_results_path):
+            rmtree(assessor_results_path)
+        os.makedirs(assessor_results_path)
 
-        # Load the model
-        ner: BaseNer
-        if model_name == "regex":
+        # Load the NER model
+        ner = get_ner(ner_name, ner_path)
 
-            ner = RegexNer(weights_path=model_path or config.NER_REGEX_WEIGHTS_FILE)
-        elif model_name == "medcat":
-
-            ner = MedCATNer(weights_path=model_path or config.NER_MEDCAT_WEIGHTS_FILE)
-        else:
-            raise ValueError(f"No '{model_name}' NER model")
+        # Load the Assessor Model
+        assessor = get_assessor(assessor_name)
 
         dataset_instance: DataInstance
         for dataset_instance in tqdm(dataset_loader):
-            new_file_path = os.path.join(
+            # Find the concepts
+            ner_file_path = os.path.join(
                 ner_results_path,
                 f"{dataset_instance.name}.con",
             )
             try:
-                entities = ner.extract_entities([dataset_instance.raw_text])[0]
-                ner.entities_to_file(entities, new_file_path)
+                concepts = ner.extract_entities([dataset_instance.raw_text])[0]
+                ner.entities_to_file(concepts, ner_file_path)
+            except UnicodeDecodeError:
+                logging.warning(
+                    "'%s' (%s set) is not readable", dataset_instance.name, dataset, exc_info=True
+                )
+
+            # Find the assertions
+            assessor_file_path = os.path.join(
+                assessor_results_path,
+                f"{dataset_instance.name}.ast",
+            )
+            concepts = list(filter(lambda x: x.label == "problem", concepts))
+            try:
+                concepts = assessor.assess_entities([dataset_instance.raw_text], [concepts])[0]
+                assessor.assertions_to_file(concepts, assessor_file_path)
             except UnicodeDecodeError:
                 logging.warning(
                     "'%s' (%s set) is not readable", dataset_instance.name, dataset, exc_info=True
@@ -89,7 +102,7 @@ class CLI:
             concept_annotation_dir=os.path.join(data_folder, "concept"),
             concept_prediction_dir=os.path.join(results_path, "ner_results"),
             assertion_annotation_dir=os.path.join(data_folder, "ast"),
-            assertion_prediction_dir="",
+            assertion_prediction_dir=os.path.join(results_path, "assessor_results"),
             relation_annotation_dir=os.path.join(data_folder, "rel"),
             relation_prediction_dir="",
             entries_dir=os.path.join(data_folder, "txt"),
