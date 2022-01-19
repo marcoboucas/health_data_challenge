@@ -92,7 +92,7 @@ class CLI:
             # Find the relations
             relation_file_path = os.path.join(
                 relation_results_path,
-                f"{dataset_instance.name}.rel",
+                f"{dataset_instance.name.replace('.txt', '')}.rel",
             )
             try:
                 relations = relextractor.find_relations([dataset_instance.raw_text], [concepts])[0]

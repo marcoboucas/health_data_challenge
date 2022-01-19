@@ -1,8 +1,7 @@
 """Random Relation Extractor."""
 
-from collections import defaultdict
 from random import choice
-from typing import Dict, List
+from typing import List
 
 from src.base.base_relextractor import BaseRelExtractor
 from src.types import (
@@ -30,30 +29,20 @@ class RandomRelExtractor(BaseRelExtractor):
     def __find_relation_one(self, text: str, entities: List[EntityAnnotation]):
         """Find one relation type."""
         relations = []
-        entities_per_line: Dict[int, List[EntityAnnotation]] = defaultdict(list)
-        for entity in entities:
-            entities_per_line[entity.start_line].append(entity)
 
-        for line_entities in entities_per_line.values():
-            line_problems = list(filter(lambda x: x.label == "problem", line_entities))
-            if len(line_entities) < 2 or len(line_problems) == 0:
-                continue
-            for problem in line_problems:
-                for other_entity in line_entities:
-                    if problem.start_word == other_entity.start_word:
-                        continue
-
-                    relations.append(
-                        RelationAnnotation(
-                            label=self.__random_relation(),
-                            left_entity=EntityAnnotationForRelation(
-                                **{k: v for k, v in other_entity.__dict__.items() if k != "label"}
-                            ),
-                            right_entity=EntityAnnotationForRelation(
-                                **{k: v for k, v in problem.__dict__.items() if k != "label"}
-                            ),
-                        )
+        for _, entities_in_relation in self.find_interesting_lines(text, entities):
+            for ent1, ent2 in entities_in_relation:
+                relations.append(
+                    RelationAnnotation(
+                        label=self.__random_relation(),
+                        left_entity=EntityAnnotationForRelation(
+                            **{k: v for k, v in ent1.__dict__.items() if k != "label"}
+                        ),
+                        right_entity=EntityAnnotationForRelation(
+                            **{k: v for k, v in ent2.__dict__.items() if k != "label"}
+                        ),
                     )
+                )
 
         relations = list(filter(lambda x: x != RelationValue.NO_RELATION, relations))
         return relations

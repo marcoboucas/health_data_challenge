@@ -2,7 +2,8 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List
+from collections import defaultdict
+from typing import Dict, List, Tuple
 
 from src.types import EntityAnnotation, RelationAnnotation
 
@@ -44,3 +45,32 @@ class BaseRelExtractor(ABC):
                         f"{relation.right_entity.end_line}:{relation.right_entity.end_word}\n"
                     )
                 )
+
+    @staticmethod
+    def find_interesting_lines(
+        text: str, entities: List[EntityAnnotation]
+    ) -> List[Tuple[str, List[Tuple[EntityAnnotation, EntityAnnotation]]]]:
+        """Find the interesting lines for relations."""
+        interesting_lines = []
+        lines = text.split("\n")
+
+        entities_per_line: Dict[int, List[EntityAnnotation]] = defaultdict(list)
+        for entity in entities:
+            entities_per_line[entity.start_line].append(entity)
+
+        for line_idx, line_entities in entities_per_line.items():
+            line_problems = list(filter(lambda x: x.label == "problem", line_entities))
+            if len(line_entities) < 2 or len(line_problems) == 0:
+                continue
+
+            # It's an interesting line !
+            line = lines[line_idx - 1]
+            entities_in_relation = []
+            for problem in line_problems:
+                for other_entity in line_entities:
+                    if problem.start_word == other_entity.start_word:
+                        continue
+
+                    entities_in_relation.append((problem, other_entity))
+            interesting_lines.append((line, entities_in_relation))
+        return interesting_lines
