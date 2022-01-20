@@ -57,6 +57,18 @@ class Parser:
             text = file.read()
         return text
 
+    @staticmethod
+    def get_absolute_index(raw_txt: str) -> Dict[int, List[int]]:
+        """Get absolute index"""
+        indexes = defaultdict(list)
+        total = 0
+        for i, line in enumerate(raw_txt.split("\n")):
+            for word in line.split(" "):
+                if word != "":
+                    indexes[i].append(total)
+                    total += 1
+        return dict(indexes)
+
 
 def is_section_title(line: str) -> bool:
     """Check if a line is a title (key of dictionary)."""
