@@ -56,7 +56,7 @@ class CLI:
             # Find the concepts
             ner_file_path = os.path.join(
                 ner_results_path,
-                f"{dataset_instance.name}.con",
+                f"{dataset_instance.name.replace('.txt', '')}.con",
             )
             try:
                 concepts = ner.extract_entities([dataset_instance.raw_text])[0]
@@ -69,7 +69,7 @@ class CLI:
             # Find the assertions
             assessor_file_path = os.path.join(
                 assessor_results_path,
-                f"{dataset_instance.name}.ast",
+                f"{dataset_instance.name.replace('.txt', '')}.ast",
             )
             concepts = list(filter(lambda x: x.label == "problem", concepts))
             try:
