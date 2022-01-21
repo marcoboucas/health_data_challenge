@@ -30,11 +30,17 @@ class DatasetLoader:
         self.columns = ["name", "path", "concept", "ast", "rel"]
         self.parser = Parser()
         if mode == "train":
-            self.data_frame = pd.read_csv(config.TRAIN_CSV).head(self.size)
+            self.data_frame = pd.read_csv(config.TRAIN_CSV)
         elif mode == "val":
-            self.data_frame = pd.read_csv(config.VAL_CSV).head(self.size)
+            self.data_frame = pd.read_csv(config.VAL_CSV)
         else:
-            self.data_frame = pd.read_csv(config.TEST_CSV).head(self.size)
+            self.data_frame = pd.read_csv(config.TEST_CSV)
+
+        # Reduce the size if needed
+        if self.size != -1:
+            self.data_frame = self.data_frame.head(self.size)
+        else:
+            self.size = self.data_frame.shape[0]
 
     def __len__(self) -> int:
         """Dataset length"""
