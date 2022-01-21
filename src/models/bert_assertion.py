@@ -203,11 +203,11 @@ class BertAssessor(BaseAssessor):
 
         # Remove ignored index (special tokens)
         true_predictions = [
-            [LABEL_LIST[p] for (p, l) in zip(prediction, label) if l != -100]
+            [LABEL_LIST[p] for (p, lab) in zip(prediction, label) if lab != -100]
             for prediction, label in zip(predictions, labels)
         ]
         true_labels = [
-            [LABEL_LIST[l] for (p, l) in zip(prediction, label) if l != -100]
+            [LABEL_LIST[lab] for (p, lab) in zip(prediction, label) if lab != -100]
             for prediction, label in zip(predictions, labels)
         ]
 
