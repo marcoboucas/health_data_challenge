@@ -18,16 +18,17 @@ class CLI:
     def run(
         self,
         dataset: Literal["train", "test", "val"],
+        size: int = -1,
         ner_name: Literal["regex", "medcat", "bert"] = "regex",
         ner_path: Optional[str] = None,
-        assessor_name: Literal["random"] = "random",
+        assessor_name: Literal["random", "bert"] = "bert",
     ) -> None:
         """Generate the NER results for one dataset.
 
         `make run`
         """
         # Prepare the folders and data
-        dataset_loader = DatasetLoader(dataset)
+        dataset_loader = DatasetLoader(dataset, size)
         ner_results_path = os.path.join(
             config.MODEl_RESULTS_FOLDER,
             dataset,
@@ -56,7 +57,7 @@ class CLI:
             # Find the concepts
             ner_file_path = os.path.join(
                 ner_results_path,
-                f"{dataset_instance.name}.con",
+                f"{dataset_instance.name.replace('.txt', '')}.con",
             )
             try:
                 concepts = ner.extract_entities([dataset_instance.raw_text])[0]
@@ -69,7 +70,7 @@ class CLI:
             # Find the assertions
             assessor_file_path = os.path.join(
                 assessor_results_path,
-                f"{dataset_instance.name}.ast",
+                f"{dataset_instance.name.replace('.txt', '')}.ast",
             )
             concepts = list(filter(lambda x: x.label == "problem", concepts))
             try:

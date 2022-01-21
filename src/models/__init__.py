@@ -36,6 +36,10 @@ def get_assessor(assessor_name: str) -> BaseAssessor:
         from src.models.random_assessor import RandomAssessor
 
         assessor = RandomAssessor()
+    elif assessor_name == "bert":
+        from src.models.bert_assertion import BertAssessor
+
+        assessor = BertAssessor()
     else:
         raise ValueError(f"No '{assessor_name}' Assessor model")
     return assessor
