@@ -58,6 +58,9 @@ class Evaluator:
         f1_rel = self.evaluate_relation() if self.relation_prediction_dir != "" else 0.0
         global_score = (f1_concept + f1_assertion + f1_rel) / 3
         print("\n\n############# GLOBAL SCORE #############")
+        print("F1 CONCEPTS", f1_concept)
+        print("F1 ASSERTIONS", f1_assertion)
+        print("F1 RELATIONS", f1_rel)
         print(round(global_score, 2))
 
     def evaluate_concept(self) -> float:
