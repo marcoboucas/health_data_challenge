@@ -15,7 +15,7 @@ from src.models import get_assessor, get_ner, get_relation_extractor
 class CLI:
     """CLI."""
 
-    def run(
+    def run(  # noqa: C901
         self,
         dataset: Literal["train", "test", "val"],
         size: int = -1,

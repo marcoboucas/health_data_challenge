@@ -64,7 +64,7 @@ suggestion-mode=yes
 unsafe-load-any-extension=no
 
 # Disable missing module docstring
-disable=missing-module-docstring
+disable=missing-module-docstring,duplicate-code
 
 [MESSAGES CONTROL]
 
