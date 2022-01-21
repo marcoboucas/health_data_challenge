@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 from datasets import load_metric
-from tqdm import tqdm
 from transformers import (
     AutoConfig,
     AutoModelForTokenClassification,
@@ -55,7 +54,7 @@ class BertAssessor(BaseAssessor):
     ) -> List[List[EntityAnnotation]]:
         """Assertion prediction functions"""
         assertion_labels = []
-        for text, entities_of_text in tqdm(zip(texts, entities), total=len(entities)):
+        for text, entities_of_text in zip(texts, entities):
             text = self.format_text(text, entities_of_text).split("\n")
             tokenized_input = self.tokenizer(text, return_tensors="pt", padding=True)
             output = self.model(**tokenized_input)
