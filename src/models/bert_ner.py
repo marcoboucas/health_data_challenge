@@ -88,7 +88,7 @@ class BertNer(BaseNer):
             compute_metrics=self.__compute_metrics,
         )
         trainer.train()
-        trainer.save_model(config.BERT_NER_WEIGHTS_FOLDER)
+        trainer.save_model(config.NER_BERT_WEIGHTS_FOLDER)
 
     #############################
     ### For entity extraction ###
@@ -285,7 +285,7 @@ class BertNer(BaseNer):
         self.tokenizer = AutoTokenizer.from_pretrained(self.BASE_MODEL)
         try:
             self.model = AutoModelForTokenClassification.from_pretrained(
-                config.BERT_NER_WEIGHTS_FOLDER
+                config.NER_BERT_WEIGHTS_FOLDER
             )
             self.logger.info("Loaded the model")
         except OSError:
