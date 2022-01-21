@@ -18,16 +18,17 @@ class CLI:
     def run(
         self,
         dataset: Literal["train", "test", "val"],
+        size: int = -1,
         ner_name: Literal["regex", "medcat"] = "regex",
         ner_path: Optional[str] = None,
-        assessor_name: Literal["random"] = "random",
+        assessor_name: Literal["random", "bert"] = "bert",
     ) -> None:
         """Generate the NER results for one dataset.
 
         `make run`
         """
         # Prepare the folders and data
-        dataset_loader = DatasetLoader(dataset)
+        dataset_loader = DatasetLoader(dataset, size)
         ner_results_path = os.path.join(
             config.MODEl_RESULTS_FOLDER,
             dataset,
