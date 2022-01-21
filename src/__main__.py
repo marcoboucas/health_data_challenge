@@ -19,7 +19,7 @@ class CLI:
         self,
         dataset: Literal["train", "test", "val"],
         size: int = -1,
-        ner_name: Literal["regex", "medcat"] = "regex",
+        ner_name: Literal["regex", "medcat", "bert"] = "regex",
         ner_path: Optional[str] = None,
         assessor_name: Literal["random", "bert"] = "bert",
     ) -> None:

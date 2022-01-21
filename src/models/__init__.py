@@ -20,6 +20,10 @@ def get_ner(ner_name: str, ner_path: str = None) -> BaseNer:
         from src.models.medcat_ner import MedCATNer
 
         ner = MedCATNer(weights_path=ner_path or config.NER_MEDCAT_WEIGHTS_FILE)
+    elif ner_name == "bert":
+        from src.models.bert_ner import BertNer
+
+        ner = BertNer()
     else:
         raise ValueError(f"No '{ner_name}' NER model")
     return ner
