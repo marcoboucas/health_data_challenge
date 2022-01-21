@@ -17,4 +17,4 @@ demo: install-streamlit
 
 
 run:
-	python -m src run --dataset=val --size=-1 --ner_name=medcat --ner_path=./weights/ner_medcat.pkl --assessor_name=bert
+	python -m src run --dataset=val --size=-1 --ner_name=medcat --ner_path=./weights/ner_medcat.pkl --assessor_name=random --relextractor_name=random

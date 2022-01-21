@@ -64,7 +64,7 @@ suggestion-mode=yes
 unsafe-load-any-extension=no
 
 # Disable missing module docstring
-disable=missing-module-docstring
+disable=missing-module-docstring,duplicate-code
 
 [MESSAGES CONTROL]
 
@@ -210,7 +210,7 @@ good-names=i,
            ex,
            Run,
            _,
-           x1,x2,y1,y2,ax,im,df,v,n,p,q,x,s1,s2
+           x1,x2,y1,y2,ax,im,df,v,n,p,q,x,s1,s2,cm
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted

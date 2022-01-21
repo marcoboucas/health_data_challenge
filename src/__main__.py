@@ -9,19 +9,21 @@ from tqdm import tqdm
 from src import config
 from src.dataset.dataset_loader import DataInstance, DatasetLoader
 from src.evaluation.eval import Evaluator
-from src.models import get_assessor, get_ner
+from src.models import get_assessor, get_ner, get_relation_extractor
 
 
 class CLI:
     """CLI."""
 
-    def run(
+    def run(  # noqa: C901
         self,
         dataset: Literal["train", "test", "val"],
         size: int = -1,
         ner_name: Literal["regex", "medcat", "bert"] = "regex",
         ner_path: Optional[str] = None,
-        assessor_name: Literal["random", "bert"] = "bert",
+        assessor_name: Literal["random", "bert"] = "random",
+        relation_extractor_name: Literal["random", "huggingface"] = "random",
+        relation_extractor_path: Optional[str] = None,
     ) -> None:
         """Generate the NER results for one dataset.
 
@@ -39,18 +41,25 @@ class CLI:
             dataset,
             "assessor_results",
         )
+        relation_results_path = os.path.join(
+            config.MODEl_RESULTS_FOLDER,
+            dataset,
+            "relation_results",
+        )
         if os.path.isdir(ner_results_path):
             rmtree(ner_results_path)
         os.makedirs(ner_results_path)
         if os.path.isdir(assessor_results_path):
             rmtree(assessor_results_path)
         os.makedirs(assessor_results_path)
+        if os.path.isdir(relation_results_path):
+            rmtree(relation_results_path)
+        os.makedirs(relation_results_path)
 
-        # Load the NER model
+        # Load the models (NER, assessor, relation extractor)
         ner = get_ner(ner_name, ner_path)
-
-        # Load the Assessor Model
         assessor = get_assessor(assessor_name)
+        relextractor = get_relation_extractor(relation_extractor_name, relation_extractor_path)
 
         dataset_instance: DataInstance
         for dataset_instance in tqdm(dataset_loader):
@@ -74,8 +83,21 @@ class CLI:
             )
             concepts = list(filter(lambda x: x.label == "problem", concepts))
             try:
-                concepts = assessor.assess_entities([dataset_instance.raw_text], [concepts])[0]
-                assessor.assertions_to_file(concepts, assessor_file_path)
+                assertions = assessor.assess_entities([dataset_instance.raw_text], [concepts])[0]
+                assessor.assertions_to_file(assertions, assessor_file_path)
+            except UnicodeDecodeError:
+                logging.warning(
+                    "'%s' (%s set) is not readable", dataset_instance.name, dataset, exc_info=True
+                )
+
+            # Find the relations
+            relation_file_path = os.path.join(
+                relation_results_path,
+                f"{dataset_instance.name.replace('.txt', '')}.rel",
+            )
+            try:
+                relations = relextractor.find_relations([dataset_instance.raw_text], [concepts])[0]
+                relextractor.relations_to_file(relations, relation_file_path)
             except UnicodeDecodeError:
                 logging.warning(
                     "'%s' (%s set) is not readable", dataset_instance.name, dataset, exc_info=True
@@ -105,7 +127,7 @@ class CLI:
             assertion_annotation_dir=os.path.join(data_folder, "ast"),
             assertion_prediction_dir=os.path.join(results_path, "assessor_results"),
             relation_annotation_dir=os.path.join(data_folder, "rel"),
-            relation_prediction_dir="",
+            relation_prediction_dir=os.path.join(results_path, "relation_results"),
             entries_dir=os.path.join(data_folder, "txt"),
         )
 
