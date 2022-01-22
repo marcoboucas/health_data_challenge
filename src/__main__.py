@@ -2,7 +2,7 @@
 # pylint: disable=too-few-public-methods,no-self-use,too-many-arguments,too-many-locals
 import os
 from shutil import rmtree
-from typing import Literal, Optional
+from typing import List, Optional
 
 from tqdm import tqdm
 
@@ -17,11 +17,11 @@ class CLI:
 
     def run(
         self,
-        dataset: Literal["train", "test", "val"],
+        dataset: List[str],
         size: int = -1,
-        ner_name: Literal["regex", "medcat"] = "regex",
+        ner_name: List[str] = "regex",
         ner_path: Optional[str] = None,
-        assessor_name: Literal["random", "bert"] = "bert",
+        assessor_name: List[str] = "bert",
     ) -> None:
         """Generate the NER results for one dataset.
 
@@ -74,8 +74,8 @@ class CLI:
             )
             concepts = list(filter(lambda x: x.label == "problem", concepts))
             try:
-                concepts = assessor.assess_entities([dataset_instance.raw_text], [concepts])[0]
-                assessor.assertions_to_file(concepts, assessor_file_path)
+                assertions = assessor.assess_entities([dataset_instance.raw_text], [concepts])[0]
+                assessor.assertions_to_file(assertions, assessor_file_path)
             except UnicodeDecodeError:
                 logging.warning(
                     "'%s' (%s set) is not readable", dataset_instance.name, dataset, exc_info=True

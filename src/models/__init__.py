@@ -33,9 +33,9 @@ def get_assessor(assessor_name: str) -> BaseAssessor:
 
         assessor = RandomAssessor()
     elif assessor_name == "bert":
-        from src.models.bert_assertion import BertAssertionnNER
+        from src.models.bert_assertion import BertAssessor
 
-        assessor = BertAssertionnNER()
+        assessor = BertAssessor()
     else:
         raise ValueError(f"No '{assessor_name}' Assessor model")
     return assessor

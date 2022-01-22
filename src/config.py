@@ -34,3 +34,22 @@ MEDCAT_ZIP_FILE = os.path.join(WEIGHTS_FOLDER, "medmen_wstatus_2021_oct.zip")
 NER_MEDCAT_WEIGHTS_FILE = os.path.join(MODELS_WEIGHTS_FOLDER, "ner_medcat.pkl")
 
 NER_REGEX_WEIGHTS_FILE = os.path.join(MODELS_WEIGHTS_FOLDER, "ner_regex.pkl")
+
+
+# Assertion bert
+
+LABEL_LIST = ["present", "absent", "hypothetical", "associated_with_someone_else"]
+TAG_DUPLICATE = ""
+TAG_ENTITY = "[entity]"
+TAG_DEL = "[delete]"
+
+MAX_LENGTH = 256
+LABEL_ENCODING_DICT = {
+    "present": 0,
+    "absent": 1,
+    "conditional": 2,
+    "possible": 2,
+    "hypothetical": 2,
+    "associated_with_someone_else": 2,
+}
+BATCH_SIZE = 8
