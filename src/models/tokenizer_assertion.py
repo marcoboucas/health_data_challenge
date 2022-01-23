@@ -1,6 +1,5 @@
 """Assertion Tokenizer"""
 import logging
-from itertools import chain
 from typing import Dict, List, Optional
 
 from transformers import AutoTokenizer
@@ -55,15 +54,18 @@ class AssertionTokenizer:
 
         labels = self.tokenize_labels(split_text, annotation_assertion=assertions)
         padded_labels = self.__pad_labels(labels)
+        batch_labels = self.__get_batch(padded_labels, batch_size=config.BATCH_SIZE)
+
+        assert len(batch_labels) == len(batch_text), "Sizes should be identical"
 
         return [
             {
                 "input_ids": tokenized_text[i]["input_ids"],
                 "token_type_ids": tokenized_text[i]["token_type_ids"],
                 "attention_mask": tokenized_text[i]["attention_mask"],
-                "labels": padded_labels[i],
+                "labels": batch_labels[i],
             }
-            for i in range(len(split_text))
+            for i, _ in enumerate(batch_text)
         ]
 
     @staticmethod
@@ -74,12 +76,36 @@ class AssertionTokenizer:
 
     def tokenize_dataset(self, dataset: DatasetLoader) -> List[Dict[str, List[List[int]]]]:
         """Tokenize dataset"""
-        return list(
-            chain(
+        dataset_as_batch = []
+
+        for data in dataset:
+            dataset_as_batch.extend(
                 self.tokenize(data.raw_text, data.annotation_concept, data.annotation_assertion)
-                for data in dataset
             )
-        )
+
+        return self.__flatten_batchs(dataset_as_batch)
+
+    @staticmethod
+    def __flatten_batchs(dataset_as_batch):
+        """"""
+        flatten_dataset = []
+        for batch in dataset_as_batch:
+            for line_id in range(config.BATCH_SIZE):
+                exists = True
+                flatten_item = {
+                    "input_ids": None,
+                    "token_type_ids": None,
+                    "attention_mask": None,
+                    "labels": None,
+                }
+                for key, values in batch.items():
+                    if len(values) >= config.BATCH_SIZE:
+                        flatten_item[key] = values[line_id]
+                    else:
+                        exists = False
+                if exists:
+                    flatten_dataset.append(flatten_item)
+        return flatten_dataset
 
     def __tag_concepts(
         self,
@@ -117,10 +143,16 @@ class AssertionTokenizer:
                             split_text[line_id - 1][word_id] = config.TAG_DUPLICATE
                         else:
                             split_text[line_id - 1][word_id] = config.TAG_DEL
-                if found.strip() != entity.text.strip():
+
+                if (
+                    found.lower().strip() != entity.text.lower().strip()
+                    and found.lower().strip() != config.TAG_ENTITY
+                ):
                     logging.warning("Found: '%s' different from initial: '%s'", found, entity.text)
+
         if del_duplicates:
             return [[token for token in line if token != config.TAG_DEL] for line in split_text]
+
         return split_text
 
     def tokenize_labels(self, split_text, annotation_assertion) -> List[List[str]]:
@@ -133,6 +165,8 @@ class AssertionTokenizer:
         ]
 
         for entity in annotation_assertion:
+            found = ""
+
             for line_id in range(entity.start_line, entity.end_line + 1):
 
                 start_word, end_word = self.__find_start_end(
@@ -140,9 +174,17 @@ class AssertionTokenizer:
                 )
 
                 for word in range(start_word, end_word):
+                    found += split_text[line_id - 1][word] + " "
 
                     if split_text[line_id - 1][word] != config.TAG_DUPLICATE:
                         labels[line_id - 1][word] = config.LABEL_ENCODING_DICT[entity.label]
+
+            if (
+                found.lower().strip() != entity.text.lower().strip()
+                and found.lower().strip() != config.TAG_ENTITY
+            ):
+                logging.warning(" Text found: '%s' different from initial '%s'", found, entity.text)
+
         return labels
 
     @staticmethod

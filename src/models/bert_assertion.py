@@ -8,6 +8,7 @@ from tqdm import tqdm
 from transformers import (
     AutoConfig,
     AutoModelForTokenClassification,
+    DataCollatorForTokenClassification,
     Trainer,
     TrainingArguments,
 )
@@ -70,16 +71,20 @@ class BertAssessor(BaseAssessor):
         """Train model"""
 
         train_data = self.tokenizer.tokenize_dataset(train_dataset)
+
+        print(len(train_data))
         # val_data = self.tokenize_dataset(val_dataset)
 
-        # data_collator = DataCollatorForTokenClassification(self.tokenizer, pad_to_multiple_of=8)
+        data_collator = DataCollatorForTokenClassification(
+            self.tokenizer.base_tokenizer, pad_to_multiple_of=config.BATCH_SIZE, padding=False
+        )
 
         trainer = Trainer(
             self.model,
             args=training_params,
             train_dataset=train_data,
-            # tokenizer=self.tokenizer,
-            # data_collator=data_collator,
+            tokenizer=self.tokenizer.base_tokenizer,
+            data_collator=data_collator,
         )
         # eval_dataset=val_data,
         # compute_metrics=self.compute_metrics,
@@ -134,5 +139,13 @@ if __name__ == "__main__":
 
     berter_assert = BertAssessor()
 
-    for data in dataset_val:
-        berter_assert.assess_entities([data.raw_text], [data.annotation_concept])
+    training_arguments = TrainingArguments(
+        "assertion-ner-finetuned-ner",
+        learning_rate=1e-4,
+        per_device_train_batch_size=config.BATCH_SIZE,
+        num_train_epochs=10,
+        weight_decay=0.01,
+        push_to_hub=False,
+    )
+
+    berter_assert.train(dataset_train, training_arguments)
