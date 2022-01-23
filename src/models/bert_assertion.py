@@ -72,7 +72,6 @@ class BertAssessor(BaseAssessor):
 
         train_data = self.tokenizer.tokenize_dataset(train_dataset)
 
-        print(len(train_data))
         # val_data = self.tokenize_dataset(val_dataset)
 
         data_collator = DataCollatorForTokenClassification(
