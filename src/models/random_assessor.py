@@ -20,7 +20,7 @@ class RandomAssessor(BaseAssessor):
         :param entities: A list of entities per text
         """
         return [
-            self.__assess_entities_one(text, entities) for text, entities in zip(texts, entities)
+            self.__assess_entities_one(text, entities) for text, entities in zip(texts, concepts)
         ]
 
     # pylint: disable=unused-argument
