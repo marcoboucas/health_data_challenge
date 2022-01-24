@@ -32,15 +32,18 @@ class BertClassifier:
     ):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info("Init the classifier...")
-        embedding_layers = embedding_layers if embedding_layers is not None else [-4, -3, -2, -1]
+        # Save all params
+        self.embedding_layers = (
+            embedding_layers if embedding_layers is not None else [-4, -3, -2, -1]
+        )
         self.dataset = dataset
+        self.target_label = target_label
+        self.batch_size = batch_size
+        self.mean_embedding = None
+        # Format and get embeddings of data
         self.formatted_data = self.__format_data(dataset)
         self.__initiate_tokenizer_model()
-        self.target_label = target_label
-        self.embedding_layers = embedding_layers
-        self.batch_size = batch_size
         self.base_embeddings = self.__load_all_embeddings()
-        self.mean_embedding = None
         if normalize_embeddings:
             self.__normalize_embeddings()
         self.logger.info("All data loaded!")
@@ -199,7 +202,7 @@ class BertClassifier:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    train_set = DatasetLoader(mode="train", size=5)
+    train_set = DatasetLoader(mode="train", size=8)
     classifier = BertClassifier(train_set)
 
     # Test the classifier
