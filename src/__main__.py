@@ -75,6 +75,10 @@ class CLI:
             dataset,
             "assessor_results",
         )
+
+        assert os.path.isdir(
+            ner_results_path
+        ), "No results for the NER, can't use the concepts then. Please run the ner first"
         if os.path.isdir(assessor_results_path):
             rmtree(assessor_results_path)
         os.makedirs(assessor_results_path)
@@ -135,6 +139,9 @@ class CLI:
             "relation_results",
         )
 
+        assert os.path.isdir(
+            ner_results_path
+        ), "No results for the NER, can't use the concepts then. Please run the ner first"
         if os.path.isdir(relation_results_path):
             rmtree(relation_results_path)
         os.makedirs(relation_results_path)
