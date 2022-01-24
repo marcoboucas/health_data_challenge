@@ -1,34 +1,32 @@
 """Main."""
 # pylint: disable=too-few-public-methods,no-self-use,too-many-arguments,too-many-locals
 import os
+from glob import glob
 from shutil import rmtree
 from typing import Literal, Optional
 
 from tqdm import tqdm
 
 from src import config
-from src.dataset.dataset_loader import DataInstance, DatasetLoader
+from src.dataset.dataset_loader import DatasetLoader
+from src.dataset.parser import Parser
 from src.evaluation.eval import Evaluator
 from src.models import get_assessor, get_ner, get_relation_extractor
+
+DatasetType = Literal["train", "test", "val"]
 
 
 class CLI:
     """CLI."""
 
-    def run(  # noqa: C901
+    def run_ner(
         self,
-        dataset: Literal["train", "test", "val"],
+        dataset: DatasetType,
         size: int = -1,
-        ner_name: Literal["regex", "medcat", "bert"] = "regex",
+        ner_name: str = "regex",
         ner_path: Optional[str] = None,
-        assessor_name: Literal["random", "bert"] = "random",
-        relation_extractor_name: Literal["random", "huggingface"] = "random",
-        relation_extractor_path: Optional[str] = None,
-    ) -> None:
-        """Generate the NER results for one dataset.
-
-        `make run`
-        """
+    ):
+        """Run the NER model on the dataset."""
         # Prepare the folders and data
         dataset_loader = DatasetLoader(dataset, size)
         ner_results_path = os.path.join(
@@ -36,33 +34,15 @@ class CLI:
             dataset,
             "ner_results",
         )
-        assessor_results_path = os.path.join(
-            config.MODEl_RESULTS_FOLDER,
-            dataset,
-            "assessor_results",
-        )
-        relation_results_path = os.path.join(
-            config.MODEl_RESULTS_FOLDER,
-            dataset,
-            "relation_results",
-        )
         if os.path.isdir(ner_results_path):
             rmtree(ner_results_path)
         os.makedirs(ner_results_path)
-        if os.path.isdir(assessor_results_path):
-            rmtree(assessor_results_path)
-        os.makedirs(assessor_results_path)
-        if os.path.isdir(relation_results_path):
-            rmtree(relation_results_path)
-        os.makedirs(relation_results_path)
 
-        # Load the models (NER, assessor, relation extractor)
+        # Load the model
         ner = get_ner(ner_name, ner_path)
-        assessor = get_assessor(assessor_name)
-        relextractor = get_relation_extractor(relation_extractor_name, relation_extractor_path)
 
-        dataset_instance: DataInstance
-        for dataset_instance in tqdm(dataset_loader):
+        # Generate the results
+        for dataset_instance in tqdm(dataset_loader, desc=f"Prediction with the NER ({ner_name})"):
             # Find the concepts
             ner_file_path = os.path.join(
                 ner_results_path,
@@ -76,41 +56,153 @@ class CLI:
                     "'%s' (%s set) is not readable", dataset_instance.name, dataset, exc_info=True
                 )
 
-            # Disable assertions and relations for now
-            continue
-            # pylint: disable=unreachable
+    def run_assessor(
+        self,
+        dataset: DatasetType,
+        size: int = -1,
+        assessor_name: str = "random",
+        assessor_path: Optional[str] = None,
+    ):
+        """Run the NER model on the dataset."""
+        # Prepare the folders and data
+        ner_results_path = os.path.join(
+            config.MODEl_RESULTS_FOLDER,
+            dataset,
+            "ner_results",
+        )
+        assessor_results_path = os.path.join(
+            config.MODEl_RESULTS_FOLDER,
+            dataset,
+            "assessor_results",
+        )
+        if os.path.isdir(assessor_results_path):
+            rmtree(assessor_results_path)
+        os.makedirs(assessor_results_path)
+
+        # Load the model
+        assessor = get_assessor(assessor_name, assessor_path)
+
+        parser = Parser()
+
+        # Generate the results
+        for i, element_path in enumerate(
+            tqdm(
+                list(glob(os.path.join(ner_results_path, "*.con"))),
+                desc=f"Prediction with the Assessor ({assessor_name})",
+            )
+        ):
+            if size != -1 and i > size:
+                break
+
+            # Element data
+            instance_name = os.path.basename(element_path).replace(".con", "")
+            instance_text = parser.get_raw_text(
+                os.path.join(config.DATA_FOLDERS[dataset], "txt", f"{instance_name}.txt")
+            )
+            instance_concepts = parser.parse_annotation_concept(element_path)
+
             # Find the assertions
             assessor_file_path = os.path.join(
                 assessor_results_path,
-                f"{dataset_instance.name.replace('.txt', '')}.ast",
+                f"{os.path.basename(element_path).replace('.con', '')}.ast",
             )
-            concepts = list(filter(lambda x: x.label == "problem", concepts))
+            instance_concepts = list(filter(lambda x: x.label == "problem", instance_concepts))
             try:
-                assertions = assessor.assess_entities([dataset_instance.raw_text], [concepts])[0]
+                assertions = assessor.assess_entities([instance_text], [instance_concepts])[0]
                 assessor.assertions_to_file(assertions, assessor_file_path)
             except UnicodeDecodeError:
                 logging.warning(
-                    "'%s' (%s set) is not readable",
-                    dataset_instance.name,
-                    dataset,
-                    exc_info=True,
+                    "'%s' (%s set) is not readable", instance_name, dataset, exc_info=True
                 )
+
+    def run_relation_extractor(
+        self,
+        dataset: DatasetType,
+        size: int = -1,
+        relation_extractor_name: str = "random",
+        relation_extractor_path: Optional[str] = None,
+    ):
+        """Run the NER model on the dataset."""
+        # Prepare the folders and data
+        ner_results_path = os.path.join(
+            config.MODEl_RESULTS_FOLDER,
+            dataset,
+            "ner_results",
+        )
+        relation_results_path = os.path.join(
+            config.MODEl_RESULTS_FOLDER,
+            dataset,
+            "relation_results",
+        )
+
+        if os.path.isdir(relation_results_path):
+            rmtree(relation_results_path)
+        os.makedirs(relation_results_path)
+
+        # Load the model
+        relation_extractor = get_relation_extractor(
+            relation_extractor_name, relation_extractor_path
+        )
+
+        parser = Parser()
+
+        # Generate the results
+        for i, element_path in enumerate(
+            tqdm(
+                list(glob(os.path.join(ner_results_path, "*.con"))),
+                desc=f"Prediction with the Relation Extractor ({relation_extractor_name})",
+            )
+        ):
+            if size != -1 and i > size:
+                break
+
+            # Element data
+            instance_name = os.path.basename(element_path).replace(".con", "")
+            instance_text = parser.get_raw_text(
+                os.path.join(config.DATA_FOLDERS[dataset], "txt", f"{instance_name}.txt")
+            )
+            instance_concepts = parser.parse_annotation_concept(element_path)
 
             # Find the relations
             relation_file_path = os.path.join(
                 relation_results_path,
-                f"{dataset_instance.name.replace('.txt', '')}.rel",
+                f"{instance_name}.rel",
             )
             try:
-                relations = relextractor.find_relations([dataset_instance.raw_text], [concepts])[0]
-                relextractor.relations_to_file(relations, relation_file_path)
+                relations = relation_extractor.find_relations([instance_text], [instance_concepts])[
+                    0
+                ]
+                relation_extractor.relations_to_file(relations, relation_file_path)
             except UnicodeDecodeError:
                 logging.warning(
-                    "'%s' (%s set) is not readable",
-                    dataset_instance.name,
-                    dataset,
-                    exc_info=True,
+                    "'%s' (%s set) is not readable", instance_name, dataset, exc_info=True
                 )
+
+    def run(  # noqa: C901
+        self,
+        dataset: Literal["train", "test", "val"],
+        size: int = -1,
+        ner_name: Literal["regex", "medcat", "bert"] = "regex",
+        ner_path: Optional[str] = None,
+        assessor_name: Literal["random", "bert"] = "random",
+        assessor_path: Optional[str] = None,
+        relation_extractor_name: Literal["random", "huggingface"] = "random",
+        relation_extractor_path: Optional[str] = None,
+    ) -> None:
+        """Generate all the results.
+
+        `make run`
+        """
+        self.run_ner(dataset=dataset, size=size, ner_name=ner_name, ner_path=ner_path)
+        self.run_assessor(
+            dataset=dataset, size=size, assessor_name=assessor_name, assessor_path=assessor_path
+        )
+        self.run_relation_extractor(
+            dataset=dataset,
+            size=size,
+            relation_extractor_name=relation_extractor_name,
+            relation_extractor_path=relation_extractor_path,
+        )
 
     def eval(self, dataset: str = "train", results_path: Optional[str] = None) -> None:
         """Evaluate the model results.
@@ -123,12 +215,10 @@ class CLI:
                 dataset,
             )
         evaluator: Evaluator
-        if dataset == "train":
-            data_folder = config.TRAIN_DATA_FOLDER
-        elif dataset == "val":
-            data_folder = config.VAL_DATA_FOLDER
-        else:
-            raise ValueError(f"Wrong value for '{dataset}' (not working with test)")
+        try:
+            data_folder = config.DATA_FOLDERS[dataset]
+        except KeyError as exc:
+            raise ValueError(f"Wrong value for '{dataset}' (not working with test)") from exc
 
         evaluator = Evaluator(
             concept_annotation_dir=os.path.join(data_folder, "concept"),
