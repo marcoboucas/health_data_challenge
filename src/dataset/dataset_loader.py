@@ -13,7 +13,7 @@ from src.types import EntityAnnotation, RelationAnnotation
 class DataInstance:
     """Dataset Instance."""
 
-    identifier: int
+    identifier: str
     name: str
     raw_text: str
     formated_text: Dict[str, str]

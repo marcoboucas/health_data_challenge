@@ -3,6 +3,7 @@
 # Important to avoid loading all the classes
 # when importing the module
 # It speeds up the code
+from typing import Optional
 
 from src import config
 from src.base.base_assessor import BaseAssessor
@@ -30,7 +31,8 @@ def get_ner(ner_name: str, ner_path: str = None) -> BaseNer:
     return ner
 
 
-def get_assessor(assessor_name: str) -> BaseAssessor:
+# pylint: disable=unused-argument
+def get_assessor(assessor_name: str, assessor_path: Optional[str] = None) -> BaseAssessor:
     """Get the requested assessor."""
     assessor: BaseAssessor
     if assessor_name == "random":
