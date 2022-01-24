@@ -17,7 +17,7 @@ class BaseAssessor(ABC):
 
     @abstractmethod
     def assess_entities(
-        self, texts: List[str], entities: List[List[EntityAnnotation]]
+        self, texts: List[str], concepts: List[List[EntityAnnotation]]
     ) -> List[List[EntityAnnotation]]:
         """Assess entities.
 

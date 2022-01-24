@@ -12,7 +12,7 @@ class RandomAssessor(BaseAssessor):
     """Random Assessor."""
 
     def assess_entities(
-        self, texts: List[str], entities: List[List[EntityAnnotation]]
+        self, texts: List[str], concepts: List[List[EntityAnnotation]]
     ) -> List[List[EntityAnnotation]]:
         """Assess entities.
 
@@ -20,7 +20,7 @@ class RandomAssessor(BaseAssessor):
         :param entities: A list of entities per text
         """
         return [
-            self.__assess_entities_one(text, entities) for text, entities in zip(texts, entities)
+            self.__assess_entities_one(text, entities) for text, entities in zip(texts, concepts)
         ]
 
     # pylint: disable=unused-argument
