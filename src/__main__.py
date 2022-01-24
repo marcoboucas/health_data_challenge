@@ -76,6 +76,9 @@ class CLI:
                     "'%s' (%s set) is not readable", dataset_instance.name, dataset, exc_info=True
                 )
 
+            # Disable assertions and relations for now
+            continue
+            # pylint: disable=unreachable
             # Find the assertions
             assessor_file_path = os.path.join(
                 assessor_results_path,
@@ -87,7 +90,10 @@ class CLI:
                 assessor.assertions_to_file(assertions, assessor_file_path)
             except UnicodeDecodeError:
                 logging.warning(
-                    "'%s' (%s set) is not readable", dataset_instance.name, dataset, exc_info=True
+                    "'%s' (%s set) is not readable",
+                    dataset_instance.name,
+                    dataset,
+                    exc_info=True,
                 )
 
             # Find the relations
@@ -100,7 +106,10 @@ class CLI:
                 relextractor.relations_to_file(relations, relation_file_path)
             except UnicodeDecodeError:
                 logging.warning(
-                    "'%s' (%s set) is not readable", dataset_instance.name, dataset, exc_info=True
+                    "'%s' (%s set) is not readable",
+                    dataset_instance.name,
+                    dataset,
+                    exc_info=True,
                 )
 
     def eval(self, dataset: str = "train", results_path: Optional[str] = None) -> None:

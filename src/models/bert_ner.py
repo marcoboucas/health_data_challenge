@@ -1,7 +1,10 @@
+from collections import Counter
 from dataclasses import dataclass
+from itertools import groupby
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
+import torch
 from datasets import load_metric
 from transformers import (
     AutoModelForTokenClassification,
@@ -30,7 +33,7 @@ class BertNerTrainingParameters:
 class BertNer(BaseNer):
     """Regex Bert"""
 
-    def __init__(self):
+    def __init__(self, device=None):
         """Init"""
         super().__init__()
         # pylint: disable=invalid-name
@@ -46,6 +49,7 @@ class BertNer(BaseNer):
         # pylint: disable=invalid-name
         self.BASE_MODEL = "emilyalsentzer/Bio_ClinicalBERT"
         self.metric = None
+        self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
         self.__load_model()
 
     def extract_entities(self, texts: List[str]) -> List[List[EntityAnnotation]]:
@@ -94,12 +98,23 @@ class BertNer(BaseNer):
     ### For entity extraction ###
     #############################
 
-    def __extract_entities_one_file(self, text: str) -> List[EntityAnnotation]:
+    def __extract_entities_one_file(
+        self, text: str, batch_size: int = 16
+    ) -> List[EntityAnnotation]:
         """Extract entities from one file"""
         # First we must get tokens, predictions and word ids of tokens
-        input_text = list(map(lambda sentence: sentence.split(" "), text.split("\n")))
+        lines = list(map(lambda sentence: sentence.split(" "), text.split("\n")))
+        text_entities = []
+        for i in range(0, len(lines), batch_size):
+            text_entities.extend(self.__extract_entities_one_batch(lines[i : i + batch_size], i))
+        return text_entities
+
+    def __extract_entities_one_batch(
+        self, lines: List[List[str]], offset: int = 0
+    ) -> List[EntityAnnotation]:
+        """Exract entities."""
         input_text_tokenized = self.tokenizer(
-            input_text, truncation=True, padding=True, is_split_into_words=True, return_tensors="pt"
+            lines, truncation=True, padding=True, is_split_into_words=True, return_tensors="pt"
         )
         bert_tokens = list(
             map(
@@ -107,8 +122,8 @@ class BertNer(BaseNer):
                 input_text_tokenized["input_ids"],
             )
         )
-        prediction_model = self.model(input_text_tokenized["input_ids"])
-        prediction_logits = prediction_model["logits"]
+        prediction_model = self.model(input_text_tokenized["input_ids"].to(self.device))
+        prediction_logits = prediction_model["logits"].to("cpu")
         predictions = prediction_logits.argmax(dim=2).numpy()
         predictions = np.vectorize(self.LABEL_LIST.__getitem__)(predictions)
         word_ids = [input_text_tokenized.word_ids(i) for i in range(len(bert_tokens))]
@@ -122,6 +137,9 @@ class BertNer(BaseNer):
             for i, (token, pred) in enumerate(merged_tokens_preds)
             for entity in self.__get_entities(token, pred, i + 1)
         ]
+        for entity in all_entities:
+            entity.start_line += offset
+            entity.end_line += offset
         return all_entities
 
     @staticmethod
@@ -131,34 +149,20 @@ class BertNer(BaseNer):
         """Format text into the format used in the model"""
         final_tokens = []
         final_preds = []
-        current_pred = None
-        current_word = ""
-        current_word_id = -1
-        for token, pred, word_id in zip(tokens, predictions, word_ids):
-            if word_id is not None and token[0] != "[" and token[-1] != "]":
-                # We complete a word
-                if word_id == current_word_id:
-                    if token[:2] == "##":
-                        current_word += token[2:]
-                    else:
-                        current_word += token
-                # We create a new word
-                else:
-                    if current_pred is not None:
-                        final_tokens.append(current_word)
-                        final_preds.append(current_pred)
-                        current_word_id = word_id
-                    current_word = token
-                    current_pred = pred
-            else:
-                if current_pred is not None:
-                    final_tokens.append(current_word)
-                    final_preds.append(current_pred)
-                current_word = ""
-                current_pred = None
-        if current_pred is not None:
-            final_tokens.append(current_word)
-            final_preds.append(current_pred)
+        offset_index = 1
+        for i, group in groupby(word_ids[1:]):
+            if i is None:
+                break
+            group = list(group)
+            group_tokens = tokens[offset_index : offset_index + len(group)]
+            group_preds = predictions[offset_index : offset_index + len(group)]
+            if len(group_tokens) == 0:
+                break
+            token = " ".join(group_tokens).replace(" ##", "")
+            label = Counter(group_preds).most_common(1)[0][0]
+            offset_index += len(group)
+            final_tokens.append(token)
+            final_preds.append(label)
         return final_tokens, final_preds
 
     @staticmethod
@@ -286,7 +290,7 @@ class BertNer(BaseNer):
         try:
             self.model = AutoModelForTokenClassification.from_pretrained(
                 config.NER_BERT_WEIGHTS_FOLDER
-            )
+            ).to(self.device)
             self.logger.info("Loaded the model")
         except OSError:
             self.logger.warning("Didn't manage to load the model, loading the default one")
@@ -303,8 +307,8 @@ if __name__ == "__main__":
     ner = BertNer()
     logging.info("Training the model !")
     train_set = DatasetLoader(mode="train")
-    val_set = DatasetLoader(mode="val")
-    ner.train(train_set, val_set)
+    # val_set = DatasetLoader(mode="val")
+    # ner.train(train_set, val_set)
     logging.info("Training done !")
     pprint(ner.extract_entities(["I have pain in my lower body"]))
-    ner.save_weights()
+    # ner.save_weights()
