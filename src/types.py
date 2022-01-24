@@ -49,6 +49,7 @@ class RelationValue(Enum):
     TrIP = "TrIP"
     PIP = "PIP"
     TrWP = "TrWP"
+    NO_RELATION = "NO_RELATION"
 
 
 @dataclass

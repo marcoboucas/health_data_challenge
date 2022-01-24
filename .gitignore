@@ -146,5 +146,6 @@ data/*
 test.json
 tmp
 *.zip
+bio_clinical_bert-finetuned-ner
 
 data/*.csv

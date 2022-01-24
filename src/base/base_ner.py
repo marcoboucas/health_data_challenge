@@ -38,7 +38,7 @@ class BaseNer(ABC):
         assert file_path.endswith(".con"), "The file must be a .con file"
         with open(file_path, "w", encoding="utf-8") as file:
             for entity in entities:
-                escaped_text = entity.text.replace("\n", " ")
+                escaped_text = entity.text.replace("\n", " ").strip(" ")
                 file.write(
                     (
                         f'c="{escaped_text}" {entity.start_line}:{entity.start_word} '

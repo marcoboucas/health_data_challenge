@@ -6,12 +6,12 @@ The script eval.py allows you to evaluate your approach to the first part of the
 ## Installation
 
 ### Prerequisites
-* python 3.8
-* pip
-* Knowledge of one of python virtual environments
+
+- python 3.8
+- pip
+- Knowledge of one of python virtual environments
 
 ### Package installation
-
 
 - Install the dependencies: `pip install -r dev.requirements.txt`
 - Prepare the data by running the command: `python -m src.dataset.extract` (You need to install the data from teams: https://centralesupelec.sharepoint.com/:f:/r/sites/Essai423-Sant_01/Documents%20partages/Sant%C3%A9_01/data?csf=1&web=1&e=ULYeMd)
@@ -19,9 +19,13 @@ The script eval.py allows you to evaluate your approach to the first part of the
 - For MedSpacy, you need to install some weights here: https://medcat.rosalind.kcl.ac.uk/media/medmen_wstatus_2021_oct.zip, you can put them in the `./weights` folder.
 
 ## Training models
+
 ### NER
+
 - For the Regex NER, you can do `python -m src.models.regex_ner`
 - For the Medcat NER, you can do `python -m src.models.medcat_ner`
+- For the Bert NER, yoi can do `python -m src.models.bert_ner`
+
 ### Access to data
 
 Ask to your coach.

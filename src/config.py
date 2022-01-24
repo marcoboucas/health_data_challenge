@@ -28,11 +28,9 @@ MODELS_WEIGHTS_FOLDER = os.path.join(ROOT_FOLDER, "weights")
 TEST_SIZE = 0.2
 
 
-# About Models
-
+# NERs
 MEDCAT_ZIP_FILE = os.path.join(WEIGHTS_FOLDER, "medmen_wstatus_2021_oct.zip")
 NER_MEDCAT_WEIGHTS_FILE = os.path.join(MODELS_WEIGHTS_FOLDER, "ner_medcat.pkl")
-
 NER_REGEX_WEIGHTS_FILE = os.path.join(MODELS_WEIGHTS_FOLDER, "ner_regex.pkl")
 
 
@@ -53,3 +51,7 @@ LABEL_ENCODING_DICT = {
     "associated_with_someone_else": 2,
 }
 BATCH_SIZE = 8
+NER_BERT_WEIGHTS_FOLDER = os.path.join(MODELS_WEIGHTS_FOLDER, "bert_ner")
+
+# RELATION MODEL
+DEFAULT_RELATION_WEIGHTS_FOLDER = os.path.join(WEIGHTS_FOLDER, "rel_extractor_bert")

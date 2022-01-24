@@ -58,6 +58,9 @@ class Evaluator:
         f1_rel = self.evaluate_relation() if self.relation_prediction_dir != "" else 0.0
         global_score = (f1_concept + f1_assertion + f1_rel) / 3
         print("\n\n############# GLOBAL SCORE #############")
+        print("F1 CONCEPTS", f1_concept)
+        print("F1 ASSERTIONS", f1_assertion)
+        print("F1 RELATIONS", f1_rel)
         print(round(global_score, 2))
 
     def evaluate_concept(self) -> float:
@@ -162,10 +165,12 @@ class Evaluator:
         }
         relation_results["macro_average"] = macro_average
         print("## Classification report for relations ##")
-        print("rel_type | precision | recall | f1-score | support\n")
+        print(
+            f"{'rel_type':>15} | {'precision':>10} | {'recall':>10} | {'f1-score':>10} | {'support':>10}\n"
+        )
         for rel_type, rel_res in relation_results.items():
             print(
-                f"{rel_type} | {rel_res[PRECISION]} | {rel_res[RECALL]} | {rel_res[F1_SCORE]} | {rel_res[NB_GROUND_TRUTH]}"
+                f"{rel_type:>15} | {rel_res[PRECISION]:>10} | {rel_res[RECALL]:>10} | {rel_res[F1_SCORE]:>10} | {rel_res[NB_GROUND_TRUTH]:>10}"
             )
         return relation_results["macro_average"][F1_SCORE]
 
@@ -400,6 +405,7 @@ class Evaluator:
         return {
             relation_type.value: {TP: 0, NB_GROUND_TRUTH: 0, NB_PRED: 0}
             for relation_type in RelationValue
+            if relation_type != RelationValue.NO_RELATION
         }
 
     def _is_rel_equal(self, first_rel: RelationAnnotation, snd_rel: RelationAnnotation) -> bool:
