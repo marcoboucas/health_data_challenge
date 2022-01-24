@@ -23,8 +23,8 @@ class CLI:
         self,
         dataset: DatasetType,
         size: int = -1,
-        ner_name: str = "regex",
-        ner_path: Optional[str] = None,
+        model_name: str = "regex",
+        model_path: Optional[str] = None,
     ):
         """Run the NER model on the dataset."""
         # Prepare the folders and data
@@ -39,10 +39,12 @@ class CLI:
         os.makedirs(ner_results_path)
 
         # Load the model
-        ner = get_ner(ner_name, ner_path)
+        ner = get_ner(model_name, model_path)
 
         # Generate the results
-        for dataset_instance in tqdm(dataset_loader, desc=f"Prediction with the NER ({ner_name})"):
+        for dataset_instance in tqdm(
+            dataset_loader, desc=f"Prediction with the NER ({model_name})"
+        ):
             # Find the concepts
             ner_file_path = os.path.join(
                 ner_results_path,
@@ -60,8 +62,8 @@ class CLI:
         self,
         dataset: DatasetType,
         size: int = -1,
-        assessor_name: str = "random",
-        assessor_path: Optional[str] = None,
+        model_name: str = "random",
+        model_path: Optional[str] = None,
     ):
         """Run the NER model on the dataset."""
         # Prepare the folders and data
@@ -84,7 +86,7 @@ class CLI:
         os.makedirs(assessor_results_path)
 
         # Load the model
-        assessor = get_assessor(assessor_name, assessor_path)
+        assessor = get_assessor(model_name, model_path)
 
         parser = Parser()
 
@@ -92,7 +94,7 @@ class CLI:
         for i, element_path in enumerate(
             tqdm(
                 list(glob(os.path.join(ner_results_path, "*.con"))),
-                desc=f"Prediction with the Assessor ({assessor_name})",
+                desc=f"Prediction with the Assessor ({model_name})",
             )
         ):
             if size != -1 and i > size:
@@ -123,8 +125,8 @@ class CLI:
         self,
         dataset: DatasetType,
         size: int = -1,
-        relation_extractor_name: str = "random",
-        relation_extractor_path: Optional[str] = None,
+        model_name: str = "random",
+        model_path: Optional[str] = None,
     ):
         """Run the NER model on the dataset."""
         # Prepare the folders and data
@@ -147,9 +149,7 @@ class CLI:
         os.makedirs(relation_results_path)
 
         # Load the model
-        relation_extractor = get_relation_extractor(
-            relation_extractor_name, relation_extractor_path
-        )
+        relation_extractor = get_relation_extractor(model_name, model_path)
 
         parser = Parser()
 
@@ -157,7 +157,7 @@ class CLI:
         for i, element_path in enumerate(
             tqdm(
                 list(glob(os.path.join(ner_results_path, "*.con"))),
-                desc=f"Prediction with the Relation Extractor ({relation_extractor_name})",
+                desc=f"Prediction with the Relation Extractor ({model_name})",
             )
         ):
             if size != -1 and i > size:
@@ -200,15 +200,15 @@ class CLI:
 
         `make run`
         """
-        self.run_ner(dataset=dataset, size=size, ner_name=ner_name, ner_path=ner_path)
+        self.run_ner(dataset=dataset, size=size, model_name=ner_name, model_path=ner_path)
         self.run_assessor(
-            dataset=dataset, size=size, assessor_name=assessor_name, assessor_path=assessor_path
+            dataset=dataset, size=size, model_name=assessor_name, model_path=assessor_path
         )
         self.run_relation_extractor(
             dataset=dataset,
             size=size,
-            relation_extractor_name=relation_extractor_name,
-            relation_extractor_path=relation_extractor_path,
+            model_name=relation_extractor_name,
+            model_path=relation_extractor_path,
         )
 
     def eval(self, dataset: str = "train", results_path: Optional[str] = None) -> None:

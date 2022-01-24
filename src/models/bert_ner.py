@@ -50,6 +50,7 @@ class BertNer(BaseNer):
         self.BASE_MODEL = "emilyalsentzer/Bio_ClinicalBERT"
         self.metric = None
         self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+        self.logger.info("Running the model on the device: '%s'", self.device)
         self.__load_model()
 
     def extract_entities(self, texts: List[str]) -> List[List[EntityAnnotation]]:
@@ -98,9 +99,7 @@ class BertNer(BaseNer):
     ### For entity extraction ###
     #############################
 
-    def __extract_entities_one_file(
-        self, text: str, batch_size: int = 16
-    ) -> List[EntityAnnotation]:
+    def __extract_entities_one_file(self, text: str, batch_size: int = 8) -> List[EntityAnnotation]:
         """Extract entities from one file"""
         # First we must get tokens, predictions and word ids of tokens
         lines = list(map(lambda sentence: sentence.split(" "), text.split("\n")))
@@ -123,7 +122,7 @@ class BertNer(BaseNer):
             )
         )
         prediction_model = self.model(input_text_tokenized["input_ids"].to(self.device))
-        prediction_logits = prediction_model["logits"].to("cpu")
+        prediction_logits = prediction_model["logits"].cpu()
         predictions = prediction_logits.argmax(dim=2).numpy()
         predictions = np.vectorize(self.LABEL_LIST.__getitem__)(predictions)
         word_ids = [input_text_tokenized.word_ids(i) for i in range(len(bert_tokens))]

@@ -37,6 +37,7 @@ NER_REGEX_WEIGHTS_FILE = os.path.join(MODELS_WEIGHTS_FOLDER, "ner_regex.pkl")
 
 
 # Assertion bert
+ASSESSOR_BERT_WEIGHTS_FOLDER = os.path.join(MODELS_WEIGHTS_FOLDER, "bert_assessor")
 
 LABEL_LIST = [
     "present",

@@ -42,7 +42,10 @@ def get_assessor(assessor_name: str, assessor_path: Optional[str] = None) -> Bas
     elif assessor_name == "bert":
         from src.models.bert_assertion_on_sentences import BertAssessorSentences
 
-        assessor = BertAssessorSentences()
+        if assessor_path is not None:
+            assessor = BertAssessorSentences(model_name=assessor_path)
+        else:
+            assessor = BertAssessorSentences()
     else:
         raise ValueError(f"No '{assessor_name}' Assessor model")
     return assessor

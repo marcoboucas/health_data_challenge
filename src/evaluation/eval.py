@@ -9,7 +9,12 @@ from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
 import fire
-from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    classification_report,
+    confusion_matrix,
+)
 
 O_TOKEN = "O_TOKEN"
 TASK_CONCEPT = "CONCEPT"
@@ -62,6 +67,7 @@ class Evaluator:
         print("F1 ASSERTIONS", f1_assertion)
         print("F1 RELATIONS", f1_rel)
         print(round(global_score, 2))
+        plt.show()
 
     def evaluate_concept(self) -> float:
         y_true, y_pred = self._load_entities(TASK_CONCEPT)
@@ -70,7 +76,9 @@ class Evaluator:
             for label, _ in sorted(Counter(y_true).items(), key=lambda c: (c[0] != O_TOKEN, -c[1]))
         ]
         print("## Confusion matrix for concepts ##")
-        print(confusion_matrix(y_true, y_pred, labels=sorted_labels))
+        concept_cm = confusion_matrix(y_true, y_pred, labels=sorted_labels, normalize="true")
+        ConfusionMatrixDisplay(concept_cm, display_labels=sorted_labels).plot()
+        print(concept_cm)
         print("\n## Classification report for concepts ##")
         print(classification_report(y_true, y_pred, labels=sorted_labels))
         class_report = classification_report(y_true, y_pred, labels=sorted_labels, output_dict=True)
@@ -83,7 +91,12 @@ class Evaluator:
             for label, _ in sorted(Counter(y_true).items(), key=lambda c: (c[0] != O_TOKEN, -c[1]))
         ]
         print("## Confusion matrix for assertions ##")
-        print(confusion_matrix(y_true, y_pred, labels=sorted_labels))
+        assertions_cm = confusion_matrix(y_true, y_pred, labels=sorted_labels, normalize="true")
+        ConfusionMatrixDisplay(
+            assertions_cm,
+            display_labels=sorted_labels,
+        ).plot()
+        print(assertions_cm)
         print("\n## Classification report for assertions ##")
         print(classification_report(y_true, y_pred, labels=sorted_labels))
         class_report = classification_report(y_true, y_pred, labels=sorted_labels, output_dict=True)
