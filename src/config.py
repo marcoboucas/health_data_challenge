@@ -38,7 +38,15 @@ NER_REGEX_WEIGHTS_FILE = os.path.join(MODELS_WEIGHTS_FOLDER, "ner_regex.pkl")
 
 # Assertion bert
 
-LABEL_LIST = ["present", "absent", "hypothetical", "associated_with_someone_else"]
+LABEL_LIST = [
+    "present",
+    "absent",
+    "conditional",
+    "possible",
+    "hypothetical",
+    "associated_with_someone_else",
+]
+
 TAG_DUPLICATE = ""
 TAG_ENTITY = "[entity]"
 TAG_DEL = "[delete]"
@@ -48,9 +56,9 @@ LABEL_ENCODING_DICT = {
     "present": 0,
     "absent": 1,
     "conditional": 2,
-    "possible": 2,
-    "hypothetical": 2,
-    "associated_with_someone_else": 2,
+    "possible": 3,
+    "hypothetical": 4,
+    "associated_with_someone_else": 5,
 }
 BATCH_SIZE = 8
 NER_BERT_WEIGHTS_FOLDER = os.path.join(MODELS_WEIGHTS_FOLDER, "bert_ner")

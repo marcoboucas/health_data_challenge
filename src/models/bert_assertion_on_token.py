@@ -16,11 +16,11 @@ from transformers import (
 from src import config
 from src.base.base_assessor import BaseAssessor
 from src.dataset.dataset_loader import DatasetLoader
-from src.models.tokenizer_assertion import AssertionTokenizer
+from src.preprocessing.tokenizer_assertion import AssertionTokenizer
 from src.types import EntityAnnotation
 
 
-class BertAssessor(BaseAssessor):
+class BertAssessorTokens(BaseAssessor):
     """Bert Assertion NER"""
 
     def __init__(self) -> None:
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     dataset_train = DatasetLoader(mode="train")
     dataset_val = DatasetLoader(mode="val")
 
-    berter_assert = BertAssessor()
+    berter_assert = BertAssessorTokens()
 
     training_arguments = TrainingArguments(
         "assertion-ner-finetuned-ner",

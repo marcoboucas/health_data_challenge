@@ -40,9 +40,9 @@ def get_assessor(assessor_name: str, assessor_path: Optional[str] = None) -> Bas
 
         assessor = RandomAssessor()
     elif assessor_name == "bert":
-        from src.models.bert_assertion import BertAssessor
+        from src.models.bert_assertion_on_sentences import BertAssessorSentences
 
-        assessor = BertAssessor()
+        assessor = BertAssessorSentences()
     else:
         raise ValueError(f"No '{assessor_name}' Assessor model")
     return assessor
