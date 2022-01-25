@@ -30,12 +30,13 @@ class BaseRelExtractor(ABC):
     def relations_to_file(relations: List[RelationAnnotation], file_path: str) -> None:
         """Convert a list of relations to a file, using the conventional format."""
         assert file_path.endswith(".rel"), "The file must be a .rel file"
+        print(f"Saving {len(relations)} relations in {file_path}\n\n\n")
         with open(file_path, "w", encoding="utf-8") as file:
             for relation in relations:
                 if relation.label == RelationValue.NO_RELATION.value:
                     continue
                 entity_left_text = relation.left_entity.text.replace("\n", " ")
-                entity_right_text = relation.left_entity.text.replace("\n", " ")
+                entity_right_text = relation.right_entity.text.replace("\n", " ")
                 file.write(
                     (
                         f'c="{entity_left_text}" '

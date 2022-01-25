@@ -1,7 +1,7 @@
 """Random Relation Extractor."""
 
 import os
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +11,6 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
 )
-from tqdm import tqdm
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -78,28 +77,44 @@ class BertRelExtractor(BaseRelExtractor):
 
         return [self.__find_relation_one(text, entities) for text, entities in zip(texts, entities)]
 
+    # pylint: disable=too-many-locals
     def __find_relation_one(
-        self, text: str, entities: List[EntityAnnotation], verbose: bool = False
+        self,
+        text: str,
+        entities: List[EntityAnnotation],
+        batch_size: int = 16,
     ) -> List[RelationAnnotation]:
         """Find all annotations for one text."""
         # Get the inputs
         interesting_lines = self.find_interesting_lines_from_entities(text, entities)
-        inputs = []
+        text_inputs: List[str] = []
         entities_pairs = []
         for line, line_entities in interesting_lines:
             for ent1, ent2 in line_entities:
-                inputs.append(self.__get_one_input(line, ent1, ent2))
+                text_inputs.append(self.__get_one_text(line, ent1, ent2))
                 entities_pairs.append((ent1, ent2))
 
         # Call the model
         self.model.eval()
-        self.logger.debug("We will run the model on %i texts", len(inputs))
+        self.logger.info("We will run the model on %i texts", len(text_inputs))
         with torch.no_grad():
             outputs = []
-            # TODO: Use a dataloader to speed up the process (batch)
-            for input_ in tqdm(inputs, disable=not verbose):
-                output = self.model(**input_.to(self.device))
-                outputs.append(self.id_to_label[output.logits.detach().cpu().argmax().item()])
+
+            for i in range(0, len(text_inputs), batch_size):
+                model_input = self.tokenizer(
+                    text_inputs[i : i + batch_size],
+                    truncation=True,
+                    padding=True,
+                    is_split_into_words=True,
+                    return_tensors="pt",
+                )
+                model_output = self.model(model_input["input_ids"].to(self.device))
+                outputs.extend(
+                    [
+                        self.id_to_label[x.argmax().item()]
+                        for x in model_output.logits.detach().cpu()
+                    ]
+                )
 
         results = []
         for output, (ent1, ent2) in zip(outputs, entities_pairs):
@@ -116,6 +131,18 @@ class BertRelExtractor(BaseRelExtractor):
             )
         return results
 
+    def __get_one_text(
+        self,
+        line: str,
+        left_entity: Union[EntityAnnotationForRelation, EntityAnnotation],
+        right_entity: Union[EntityAnnotationForRelation, EntityAnnotation],
+    ) -> str:
+        """Get the text for one relation."""
+        return (
+            f"{self.cls_token} {line} {self.sep_token} "
+            f"{left_entity.text} {self.sep_token} {right_entity.text}"
+        )
+
     def __get_one_input(
         self,
         line: str,
@@ -124,18 +151,18 @@ class BertRelExtractor(BaseRelExtractor):
         label: Optional[str] = None,
     ) -> Dict:
         """Get one input from the needed data."""
-        final_text = (
-            f"{self.cls_token} {line} {self.sep_token} "
-            f"{left_entity.text} {self.sep_token} {right_entity.text}"
-        )
+        final_text = self.__get_one_text(line, left_entity, right_entity)
         tokenized_text = self.tokenizer(
-            final_text, padding="max_length", truncation=True, return_tensors="pt"
+            final_text,
+            padding="max_length",
+            truncation=True,
+            return_tensors=None if label else "pt",
         )
         if label:
             tokenized_text["labels"] = [self.label_to_id[label]]
         return tokenized_text
 
-    def preprocess_dataset(self, dataset, size: int = -1):
+    def preprocess_dataset(self, dataset, size: int = -1) -> List[Dict[str, Any]]:
         """Preprocess a function"""
         outputs = []
         for element in dataset:
@@ -160,7 +187,7 @@ class BertRelExtractor(BaseRelExtractor):
         learning_rate: float = 1e-4,
         weight_decay: float = 0.01,
         epochs: int = 5,
-        batch_size: int = 8,
+        batch_size: int = 128,
         evaluate: bool = False,
         plot_fig: bool = False,
     ) -> None:
@@ -190,17 +217,19 @@ class BertRelExtractor(BaseRelExtractor):
         # Load the training set
         train_dataset = self.preprocess_dataset(RelDataset("train"))
         self.logger.info("Training on %i elements", len(train_dataset))
-
+        val_dataset = self.preprocess_dataset(RelDataset("val"))
+        self.logger.info("Evaluation on %i elements", len(val_dataset))
         # Training !!
         set_seed(training_args.seed)
         self.logger.info("Cuda device availability: %s", torch.cuda.is_available())
+
         trainer = Trainer(
             model=self.model,
             args=training_args,
             train_dataset=train_dataset,
-            eval_dataset=None,
+            eval_dataset=val_dataset,
             compute_metrics=self.compute_metrics,
-            tokenizer=self.tokenizer,
+            # tokenizer=self.tokenizer,
             data_collator=data_collator,
         )
         train_result = trainer.train()
@@ -249,28 +278,33 @@ class BertRelExtractor(BaseRelExtractor):
 if __name__ == "__main__":
     import logging
 
-    logging.basicConfig(level=logging.DEBUG)
-    relation_extractor = BertRelExtractor(weights_path="./weights/relextractor_bert")
+    logging.basicConfig(level=logging.INFO)
+    TRAIN_MODEL = False
+    if TRAIN_MODEL:
 
-    relation_extractor.train(
-        model_name="distilbert-base-uncased",
-        learning_rate=1e-4,
-        weight_decay=0.01,
-        epochs=5,
-        batch_size=8,
-        evaluate=True,
-        plot_fig=True,
-    )
-    """
-    pprint(
-        relation_extractor.find_relations(
-            texts=["hypertension was controlled on hydrochlorothiazide"],
-            entities=[
-                [
-                    EntityAnnotation("problem", "hypertension", 1, 1, 0, 0),
-                    EntityAnnotation("problem", "hydrochlorothiazide", 1, 1, 4, 4),
-                ]
-            ],
+        relation_extractor = BertRelExtractor()
+
+        relation_extractor.train(
+            model_name="distilbert-base-uncased",
+            learning_rate=1e-4,
+            weight_decay=0.01,
+            epochs=5,
+            batch_size=8,
+            evaluate=True,
+            plot_fig=True,
         )
-    )
-    """
+    else:
+        from pprint import pprint
+
+        relation_extractor = BertRelExtractor(weights_path="./weights/relextractor_bert")
+        pprint(
+            relation_extractor.find_relations(
+                texts=["hypertension was controlled on hydrochlorothiazide"],
+                entities=[
+                    [
+                        EntityAnnotation("problem", "hypertension", 1, 1, 0, 0),
+                        EntityAnnotation("problem", "hydrochlorothiazide", 1, 1, 4, 4),
+                    ]
+                ],
+            )
+        )

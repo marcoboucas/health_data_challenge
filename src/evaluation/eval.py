@@ -56,9 +56,11 @@ class Evaluator:
 
     def evaluate(self):
         print("############# CONCEPT EVALUATION #############")
-        f1_concept = self.evaluate_concept()
+        f1_concept = 0.0  # self.evaluate_concept()
         print("\n\n############# ASSERTION EVALUATION #############")
-        f1_assertion = self.evaluate_assertion() if self.assertion_prediction_dir != "" else 0.0
+        f1_assertion = (
+            0.0  # self.evaluate_assertion() if self.assertion_prediction_dir != "" else 0.0
+        )
         print("\n\n############# RELATION EVALUATION #############")
         f1_rel = self.evaluate_relation() if self.relation_prediction_dir != "" else 0.0
         global_score = (f1_concept + f1_assertion + f1_rel) / 3
