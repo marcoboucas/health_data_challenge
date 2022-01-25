@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
-from src.types import EntityAnnotation, RelationAnnotation
+from src.types import EntityAnnotation, RelationAnnotation, RelationValue
 
 
 class BaseRelExtractor(ABC):
@@ -32,6 +32,8 @@ class BaseRelExtractor(ABC):
         assert file_path.endswith(".rel"), "The file must be a .rel file"
         with open(file_path, "w", encoding="utf-8") as file:
             for relation in relations:
+                if relation.label == RelationValue.NO_RELATION.value:
+                    continue
                 entity_left_text = relation.left_entity.text.replace("\n", " ")
                 entity_right_text = relation.left_entity.text.replace("\n", " ")
                 file.write(

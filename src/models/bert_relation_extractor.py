@@ -42,7 +42,7 @@ class BertRelExtractor(BaseRelExtractor):
     sep_token: str = ("[SEP]",)
     cls_token: str = "[CLS]"
 
-    def __init__(self, weights_path: Optional[str] = None) -> None:
+    def __init__(self, weights_path: Optional[str] = None, device=None) -> None:
         """Init."""
         super().__init__()
 
@@ -51,6 +51,9 @@ class BertRelExtractor(BaseRelExtractor):
         self.num_labels = len(self.labels_list)
         self.id_to_label = dict(enumerate(self.labels_list))
         self.label_to_id = {k: i for i, k in enumerate(self.labels_list)}
+
+        self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+        self.logger.info("Running the model on the device: '%s'", self.device)
 
         # Load the model if required
         if weights_path is not None and os.path.isdir(weights_path):
@@ -61,7 +64,7 @@ class BertRelExtractor(BaseRelExtractor):
     def load_model(self, model_path: str) -> None:
         """Load the model."""
         self.logger.info("Loading the model from pretrained weights...")
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_path)
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_path).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
 
     def find_relations(
@@ -95,8 +98,8 @@ class BertRelExtractor(BaseRelExtractor):
             outputs = []
             # TODO: Use a dataloader to speed up the process (batch)
             for input_ in tqdm(inputs, disable=not verbose):
-                output = self.model(**input_)
-                outputs.append(self.id_to_label[output.logits.argmax().item()])
+                output = self.model(**input_.to(self.device))
+                outputs.append(self.id_to_label[output.logits.detach().cpu().argmax().item()])
 
         results = []
         for output, (ent1, ent2) in zip(outputs, entities_pairs):
@@ -245,14 +248,13 @@ class BertRelExtractor(BaseRelExtractor):
 
 if __name__ == "__main__":
     import logging
-    from pprint import pprint
 
     logging.basicConfig(level=logging.DEBUG)
     relation_extractor = BertRelExtractor(weights_path="./weights/relextractor_bert")
-    """
+
     relation_extractor.train(
         model_name="distilbert-base-uncased",
-        lr=1e-4,
+        learning_rate=1e-4,
         weight_decay=0.01,
         epochs=5,
         batch_size=8,
@@ -271,3 +273,4 @@ if __name__ == "__main__":
             ],
         )
     )
+    """
