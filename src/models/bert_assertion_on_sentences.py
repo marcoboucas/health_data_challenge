@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
     # berter_assert.train(dataset_train, training_arguments)
 
-    for l, data in enumerate(dataset_val):
-        if l == 1:
+    for j, data in enumerate(dataset_val):
+        if j == 1:
             print(data.raw_text)
             print(berter_assert.assess_entities([data.raw_text], [data.annotation_concept]))
