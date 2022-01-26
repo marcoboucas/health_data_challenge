@@ -1,19 +1,22 @@
 """Demonstrator."""
-
+# pylint: disable=C0413
 
 import sys
 
+import pandas as pd
 import streamlit as st
 
 sys.path.append(".")
+from demonstrator.expandable import expandable_cluster
+
 # pylint: disable=wrong-import-position
-from demonstrator.document_view import document_view
-from demonstrator.utils import load_models, update_document
-from src.dataset.dataset_loader import DatasetLoader
+from demonstrator.sidebar import sidebar_view
+from demonstrator.uploader import uploader
+from demonstrator.utils import load_data
 
 st.set_page_config(
     page_title="Health Challenge",
-    page_icon="🧊",
+    page_icon="📒",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
@@ -24,34 +27,46 @@ st.set_page_config(
 )
 st.markdown("## Health Project")
 
-with st.expander("Model parameters", False):
-    with st.form("params"):
-        st.selectbox("NER Model", options=["RegexNer", "MedCATNer"], index=0, key="ner_model")
-        st.form_submit_button(on_click=load_models)
+
+st.markdown("### Upload data")
+
+uploader()
 
 
-if "dataset" not in st.session_state:
-    st.session_state["dataset"] = DatasetLoader(mode="test")
-
-if "ner" not in st.session_state:
-    load_models()
-
-
-with st.container():
-    st.markdown(f"Model: {st.session_state.get('ner').__class__.__name__}")
+@st.cache
+def to_csv(df):
+    """To CSV"""
+    return df.to_csv().encode("utf-8")
 
 
-st.select_slider(
-    label="Select the document you want to examine",
-    options=range(len(st.session_state["dataset"])),
-    value=0,
-    key="dataset_instance_id",
-    on_change=update_document,
+data = load_data()
+
+st.markdown("### Cohort Selection")
+
+for cluster_id, cluster in data.items():
+    st.checkbox(
+        f"({len(cluster['patients'])}) {cluster['name']}",
+        key=f"pin-{cluster.get('name', 'name')}",
+        value=cluster_id == "1",
+    )
+
+sidebar_view()
+
+cohortes_df_ = []
+for cluster in data.values():
+    if st.session_state.get(f"pin-{cluster['name']}") is True:
+        cohortes_df_.extend(cluster["patients"])
+
+st.metric(
+    "Number of patients",
+    len(cohortes_df_),
+    len(cohortes_df_) - st.session_state.get("nbr-patients"),
+)
+st.download_button(
+    "Download Excel 📂", to_csv(pd.DataFrame.from_records(cohortes_df_)), file_name="cohorts.csv"
 )
 
-if "dataset_instance" in st.session_state:
 
-    document_view()
-
-else:
-    update_document()
+for cluster in data.values():
+    if st.session_state.get(f"pin-{cluster['name']}") is True:
+        expandable_cluster(cluster)

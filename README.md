@@ -42,3 +42,5 @@ python eval.py evaluate  \
 --relation_prediction_dir=<path_to_relation_prediction_dir> \
 --entries_dir=<path_to_medical_reports>
 ```
+## Launch demonstrator
+

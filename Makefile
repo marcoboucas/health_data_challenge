@@ -19,3 +19,5 @@ demo: install-streamlit
 run:
 	python -m src run --dataset=val --size=-1 --ner_name=bert --ner_path=./weights/ner_medcat.pkl --assessor_name=bert --relation_extractor_name=random
 
+demonstrator: install-streamlit
+	streamlit run demonstrator/__main__.py

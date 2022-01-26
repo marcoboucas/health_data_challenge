@@ -1,0 +1,74 @@
+{
+    "1": {
+        "tests_labels": [
+            "methgb",
+            "bnp",
+            "vma",
+            "colonoscopy",
+            "electrocardiogram"
+        ],
+        "problem_labels": [
+            "tumor",
+            "depressed",
+            "chondrocalcinosis",
+            "hemorrhage",
+            "pulses"
+        ],
+        "treatment_labels": [
+            "immunization",
+            "tetracyclines",
+            "supplements",
+            "dilatation",
+            "marinol"
+        ],
+        "patients": []
+    },
+    "2": {
+        "tests_labels": [
+            "mri",
+            "totbili",
+            "radiograph",
+            "urean"
+        ],
+        "problem_labels": [
+            "edema",
+            "crackle",
+            "cellulitis",
+            "bleeding",
+            "nondysmorphic"
+        ],
+        "treatment_labels": [
+            "klonopin",
+            "nitrates",
+            "iron",
+            "ortho-tri-cyclen",
+            "sutures",
+            "catheter"
+        ],
+        "patients": []
+    },
+    "3": {
+        "tests_labels": [
+            "svr",
+            "doppler",
+            "palpation",
+            "ldl",
+            "lymphocytes",
+            "trig"
+        ],
+        "problem_labels": [
+            "paranoia",
+            "ascites",
+            "metastases",
+            "rbbb"
+        ],
+        "treatment_labels": [
+            "sinemet",
+            "sedated",
+            "clomipramine",
+            "clopidogrel",
+            "rosuvastatin"
+        ],
+        "patients": []
+    }
+}
