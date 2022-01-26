@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import fire
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
     classification_report,
@@ -56,11 +57,9 @@ class Evaluator:
 
     def evaluate(self):
         print("############# CONCEPT EVALUATION #############")
-        f1_concept = 0.0  # self.evaluate_concept()
+        f1_concept = self.evaluate_concept()
         print("\n\n############# ASSERTION EVALUATION #############")
-        f1_assertion = (
-            0.0  # self.evaluate_assertion() if self.assertion_prediction_dir != "" else 0.0
-        )
+        f1_assertion = self.evaluate_assertion() if self.assertion_prediction_dir != "" else 0.0
         print("\n\n############# RELATION EVALUATION #############")
         f1_rel = self.evaluate_relation() if self.relation_prediction_dir != "" else 0.0
         global_score = (f1_concept + f1_assertion + f1_rel) / 3
@@ -110,6 +109,8 @@ class Evaluator:
             for filename in os.listdir(self.relation_annotation_dir)
             if filename.endswith(".rel")
         ]
+        rel_cm = np.zeros((len(RelationValue), len(RelationValue)))
+        label2idx = {k: i for i, k in enumerate(RelationValue)}
         relation_results = self._init_dict_results_for_relations()
         for filename in filenames:
             ground_truth_relations = self._load_relation_annotation_file(
@@ -120,17 +121,30 @@ class Evaluator:
             )
 
             # Look for true positive
+            predictions_in_real = set()
             for gt_rel in ground_truth_relations:
                 relation_results[gt_rel.label.value][NB_GROUND_TRUTH] += 1
-                for pred_rel in prediction_relations:
+                for i, pred_rel in enumerate(prediction_relations):
                     if self._is_rel_equal(gt_rel, pred_rel) is True:
                         relation_results[gt_rel.label.value][TP] += 1
+                        rel_cm[label2idx[gt_rel.label]][label2idx[pred_rel.label]] += 1
+                        predictions_in_real.add(i)
                         break
+                    elif self._are_relation_entities_equal(gt_rel, pred_rel) is True:
+                        rel_cm[label2idx[gt_rel.label]][label2idx[pred_rel.label]] += 1
+                        predictions_in_real.add(i)
+                        break
+
+                else:
+                    rel_cm[label2idx[gt_rel.label]][label2idx[RelationValue.NO_RELATION]] += 1
+            for i, pred_rel in enumerate(prediction_relations):
+                if i not in prediction_relations:
+                    rel_cm[label2idx[RelationValue.NO_RELATION]][label2idx[pred_rel.label]] += 1
 
             # Count nb of predictions for each relation type
             for pred_rel in prediction_relations:
                 relation_results[pred_rel.label.value][NB_PRED] += 1
-
+        ConfusionMatrixDisplay(rel_cm, display_labels=[x.value for x in label2idx.keys()]).plot()
         for rel_type in relation_results.keys():
             relation_results[rel_type][RECALL] = (
                 round(
@@ -424,10 +438,19 @@ class Evaluator:
         }
 
     def _is_rel_equal(self, first_rel: RelationAnnotation, snd_rel: RelationAnnotation) -> bool:
+        return (first_rel.label == snd_rel.label) and self._are_relation_entities_equal(
+            first_rel=first_rel, snd_rel=snd_rel
+        )
+
+    def _are_relation_entities_equal(
+        self, first_rel: RelationAnnotation, snd_rel: RelationAnnotation
+    ) -> bool:
         return (
-            (first_rel.label == snd_rel.label)
-            and self._is_entity_equal(first_rel.left_entity, snd_rel.left_entity)
+            self._is_entity_equal(first_rel.left_entity, snd_rel.left_entity)
             and self._is_entity_equal(first_rel.right_entity, snd_rel.right_entity)
+        ) or (
+            self._is_entity_equal(first_rel.left_entity, snd_rel.right_entity)
+            and self._is_entity_equal(first_rel.left_entity, snd_rel.right_entity)
         )
 
     @staticmethod

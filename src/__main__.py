@@ -146,7 +146,7 @@ class CLI:
         ), "No results for the NER, can't use the concepts then. Please run the ner first"
         if os.path.isdir(relation_results_path):
             rmtree(relation_results_path)
-        os.makedirs(relation_results_path)
+        os.makedirs(relation_results_path, exist_ok=True)
 
         # Load the model
         relation_extractor = get_relation_extractor(model_name, model_path)
