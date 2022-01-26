@@ -4,6 +4,7 @@ from typing import List
 
 import numpy as np
 from datasets import load_metric
+from torch import nn
 from tqdm import tqdm
 from transformers import (
     AutoConfig,
@@ -25,18 +26,26 @@ from src.types import EntityAnnotation
 class BertAssessorSentences(BaseAssessor):
     """Bert Assertion NER"""
 
-    def __init__(self) -> None:
+    def __init__(self, num_labels: int = len(config.LABEL_LIST)) -> None:
         self.model_name = "bvanaken/clinical-assertion-negation-bert"
-        self.num_labels = 3
+        self.num_labels = num_labels
 
         self.config = AutoConfig.from_pretrained(
             self.model_name,
             num_labels=self.num_labels,
         )
-        self.tokenizer = AssertionSentenceTokenizer(base_tokenizer=self.model_name)
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name, config=self.config
+        self.tokenizer = AssertionSentenceTokenizer(
+            base_tokenizer=self.model_name, num_labels=num_labels
         )
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            self.model_name, config=self.config, ignore_mismatched_sizes=True
+        )
+        if num_labels != 3:
+            # rewrite head
+            self.model.classifier = nn.Linear(
+                in_features=768, out_features=self.num_labels, bias=True
+            )
+
         self.metric = load_metric("seqeval")
 
         super().__init__()
@@ -122,12 +131,6 @@ if __name__ == "__main__":
         per_device_train_batch_size=config.BATCH_SIZE,
         num_train_epochs=10,
         weight_decay=0.01,
-        push_to_hub=False,
     )
 
-    # berter_assert.train(dataset_train, training_arguments)
-
-    for j, data in enumerate(dataset_val):
-        if j == 1:
-            print(data.raw_text)
-            print(berter_assert.assess_entities([data.raw_text], [data.annotation_concept]))
+    berter_assert.train(dataset_train, training_arguments)
