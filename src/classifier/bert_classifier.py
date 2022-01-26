@@ -1,5 +1,7 @@
 import logging
+import os
 import pickle
+import re
 from math import ceil
 from typing import Any, Dict, List, Tuple
 
@@ -26,27 +28,29 @@ class BertClassifier:
     def __init__(
         self,
         batch_size: int = 16,
+        tokenizer_path: str = "sentence-transformers/bert-base-nli-mean-tokens",
+        model_path: str = "sentence-transformers/bert-base-nli-mean-tokens",
     ):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info("Init the classifier...")
         # Save all params
+        self.tokenizer_path = tokenizer_path
+        self.model_path = model_path
         self.batch_size = batch_size
-        self.embedding_layers = None
         self.target_label = None
         self.normalize_embeddings = None
         self.mean_embedding = None
         self.base_texts = []
         self.base_embeddings = []
         # Format and get embeddings of data
-        self.__load_weights()
-        self.__initiate_tokenizer_model()
+        self._load_weights()
+        self._initiate_tokenizer_model()
         self.logger.info("Classifier init ended!")
 
     def train(
         self,
         dataset: DatasetLoader,
         target_label: str = "problem",
-        embedding_layers: List[int] = None,
         normalize_embeddings: bool = True,
     ):
         """
@@ -55,19 +59,9 @@ class BertClassifier:
         # We must check if the params are the same that the one saved in the dataset
         assert self.target_label is None or target_label == self.target_label
         assert (
-            self.embedding_layers is None
-            or embedding_layers is None
-            or sorted(embedding_layers) == sorted(self.embedding_layers)
-        )
-        assert (
             self.normalize_embeddings is None or normalize_embeddings == self.normalize_embeddings
         )
         self.logger.info("Beginning training...")
-        self.embedding_layers = (
-            embedding_layers
-            if embedding_layers is not None
-            else (self.embedding_layers if self.embedding_layers is not None else [-4, -3, -2, -1])
-        )
         self.base_texts.extend(list(map(lambda elt: elt.raw_text, dataset)))
         self.target_label = target_label
         self.normalize_embeddings = normalize_embeddings
@@ -78,7 +72,7 @@ class BertClassifier:
         self.base_embeddings.extend(self.__load_all_embeddings(formatted_data))
         if self.normalize_embeddings:
             self.__normalize_embeddings()
-        self.__save_weights()
+        self._save_weights()
         self.logger.info("Training ended!")
 
     def get_best_docs(
@@ -103,17 +97,23 @@ class BertClassifier:
         best_docs = [(similarities[k], self.base_texts[k]) for k in best_indices]
         return best_docs
 
-    def __load_weights(self):
+    def _load_weights(self):
         """
         To load all the weights
         """
         try:
             # pylint: disable=consider-using-with
-            file = open(config.CLASSIF_BERT_EMBEDDINGS, "rb")
+            file = open(
+                os.path.join(
+                    config.CLASSIF_BERT_EMBEDDINGS_FOLDER,
+                    self._get_model_filename(self.model_path),
+                ),
+                "rb",
+            )
             data_to_load = pickle.load(file)
+            self.tokenizer_path = data_to_load["tokenizer_path"]
             self.target_label = data_to_load["target_label"]
             self.normalize_embeddings = data_to_load["normalize_embeddings"]
-            self.embedding_layers = data_to_load["embedding_layers"]
             self.base_texts = data_to_load["base_texts"]
             self.base_embeddings = data_to_load["base_embeddings"]
             self.mean_embedding = data_to_load["mean_embedding"]
@@ -121,39 +121,36 @@ class BertClassifier:
         except FileNotFoundError:
             self.logger.warning("No weights loaded, should train before using it")
 
-    def __save_weights(self):
+    def _save_weights(self):
         """
         To save all the weights we will need later
         """
         data_to_save = {
+            "tokenizer_path": self.tokenizer_path,
             "target_label": self.target_label,
             "normalize_embeddings": self.normalize_embeddings,
-            "embedding_layers": self.embedding_layers,
             "base_texts": self.base_texts,
             "base_embeddings": self.base_embeddings,
             "mean_embedding": self.mean_embedding,
         }
-        with open(config.CLASSIF_BERT_EMBEDDINGS, "wb") as file:
-            # asdict
+        with open(
+            os.path.join(
+                config.CLASSIF_BERT_EMBEDDINGS_FOLDER,
+                self._get_model_filename(self.model_path),
+            ),
+            "wb",
+        ) as file:
             pickle.dump(data_to_save, file)
         logging.info("All weights loaded!")
 
-    def __initiate_tokenizer_model(self):
+    def _initiate_tokenizer_model(self):
         """
         To initilize the device, the tokenizer and the model
         """
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.tokenizer = AutoTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
-        try:
-            self.model = AutoModel.from_pretrained(
-                config.NER_BERT_WEIGHTS_FOLDER, output_hidden_states=True
-            ).to(self.device)
-            self.logger.info("Loaded local model")
-        except OSError:
-            self.logger.warning("No local model found, loading default model")
-            self.model = AutoModel.from_pretrained(
-                "emilyalsentzer/Bio_ClinicalBERT", output_hidden_states=True
-            ).to(self.device)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_path)
+        self.model = AutoModel.from_pretrained(self.model_path).to(self.device)
+        self.logger.info("Loaded local model")
 
     def __load_all_embeddings(self, formatted_data: List[List[Dict[str, Any]]]):
         """
@@ -200,9 +197,7 @@ class BertClassifier:
                 np.where(np.in1d(word_ids, indexes))
                 for word_ids, indexes in zip(words_ids, indexes_list)
             ]
-            hidden_states = self.__get_hidden_states(
-                encoded_local, token_ids_word, self.embedding_layers
-            )
+            hidden_states = self._get_hidden_states(encoded_local, token_ids_word)
             embeddings.extend(hidden_states)
         # Compute the final embedding vector
         if len(embeddings) > 0:
@@ -211,16 +206,12 @@ class BertClassifier:
             embedding = None
         return embedding
 
-    def __get_hidden_states(self, encoded, token_ids_words: List[List[int]], layers: List[int]):
+    def _get_hidden_states(self, encoded, token_ids_words: List[List[int]]):
         """
         To get the hidden states of the encoded words
         """
         with torch.no_grad():
-            output = self.model(encoded)
-        # Get all hidden states
-        states = output.hidden_states
-        # Stack and sum all requested layers
-        output = torch.stack([states[i] for i in layers]).sum(0)
+            output = self.model(encoded)[0]
         # Only select the tokens that constitute the requested words
         hidden_states = []
         for i, ids in enumerate(token_ids_words):
@@ -245,6 +236,11 @@ class BertClassifier:
         self.base_embeddings = [
             e - self.mean_embedding if e is not None else None for e in self.base_embeddings
         ]
+
+    @staticmethod
+    def _get_model_filename(model_name: str) -> str:
+        model_name_no_extension = model_name.split(".")[0]
+        return "{}.pkl".format("_".join(re.split(r"\W+", model_name_no_extension)))
 
     @staticmethod
     def __format_data(base_dataset: DatasetLoader) -> List[List[Dict[str, Any]]]:
