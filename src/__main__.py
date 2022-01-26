@@ -13,7 +13,7 @@ from src.dataset.parser import Parser
 from src.evaluation.eval import Evaluator
 from src.models import get_assessor, get_ner, get_relation_extractor
 
-DatasetType = Literal["train", "test", "val"]
+DatasetType = Literal["train", "test", "val", "test_final"]
 
 
 class CLI:

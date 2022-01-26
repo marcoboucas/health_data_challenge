@@ -20,6 +20,7 @@ ALL_DOCUMENTS_CSV = os.path.join(DATA_FOLDER, "all_documents.csv")
 TRAIN_CSV = os.path.join(DATA_FOLDER, "train.csv")
 VAL_CSV = os.path.join(DATA_FOLDER, "val.csv")
 TEST_CSV = os.path.join(DATA_FOLDER, "test.csv")
+TEST_FINAL_CSV = os.path.join(DATA_FOLDER, "test_final.csv")
 
 MODEl_RESULTS_FOLDER = os.path.join(DATA_FOLDER, "results")
 MODELS_WEIGHTS_FOLDER = os.path.join(ROOT_FOLDER, "weights")

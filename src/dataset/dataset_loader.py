@@ -33,8 +33,11 @@ class DatasetLoader:
             self.data_frame = pd.read_csv(config.TRAIN_CSV)
         elif mode == "val":
             self.data_frame = pd.read_csv(config.VAL_CSV)
+        elif mode == "test_final":
+            self.data_frame = pd.read_csv(config.TEST_FINAL_CSV)
         else:
             self.data_frame = pd.read_csv(config.TEST_CSV)
+        self.data_frame["name"] = self.data_frame["name"].astype(str)
 
         # Reduce the size if needed
         if self.size != -1:
