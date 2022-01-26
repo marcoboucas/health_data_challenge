@@ -43,7 +43,7 @@ def get_assessor(assessor_name: str, assessor_path: Optional[str] = None) -> Bas
         from src.models.bert_assertion_on_sentences import BertAssessorSentences
 
         if assessor_path is not None:
-            assessor = BertAssessorSentences(model_name=assessor_path)
+            assessor = BertAssessorSentences()
         else:
             assessor = BertAssessorSentences()
     else:

@@ -12,9 +12,12 @@ from src.types import EntityAnnotation
 class AssertionSentenceTokenizer:
     """Assertion Tokenizer"""
 
-    def __init__(self, base_tokenizer: str = "bvanaken/clinical-assertion-negation-bert") -> None:
+    def __init__(
+        self, device, base_tokenizer: str = "bvanaken/clinical-assertion-negation-bert"
+    ) -> None:
         super().__init__()
         self.base_tokenizer = AutoTokenizer.from_pretrained(base_tokenizer)
+        self.device = device
 
     def __call__(
         self,
@@ -55,7 +58,7 @@ class AssertionSentenceTokenizer:
                 is_split_into_words=False,
                 truncation=True,
                 add_special_tokens=True,
-            )
+            ).to(self.device)
             for batch in batch_lines
         ]
 

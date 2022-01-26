@@ -1,4 +1,5 @@
 """Dataset loader"""
+import logging
 from dataclasses import asdict, dataclass, field
 from typing import Dict, List, Literal
 
@@ -29,14 +30,17 @@ class DatasetLoader:
         self.size = size
         self.columns = ["name", "path", "concept", "ast", "rel"]
         self.parser = Parser()
+        logging.info("Load the %s dataset", mode)
         if mode == "train":
             self.data_frame = pd.read_csv(config.TRAIN_CSV)
         elif mode == "val":
             self.data_frame = pd.read_csv(config.VAL_CSV)
         elif mode == "test_final":
             self.data_frame = pd.read_csv(config.TEST_FINAL_CSV)
+            self.data_frame["name"] = self.data_frame["name"].apply(lambda x: str(x).rjust(4, "0"))
         else:
-            self.data_frame = pd.read_csv(config.TEST_CSV)
+            self.data_frame = pd.read_csv(config.TEST_CSV, dtype=str)
+
         self.data_frame["name"] = self.data_frame["name"].astype(str)
 
         # Reduce the size if needed

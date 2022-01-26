@@ -13,8 +13,14 @@ WEIGHTS_FOLDER = os.path.join(ROOT_FOLDER, "weights")
 
 TRAIN_DATA_FOLDER = os.path.join(DATA_FOLDER, "train")
 VAL_DATA_FOLDER = os.path.join(DATA_FOLDER, "val")
+TEST_FINAL_DATA_FOLDER = os.path.join(DATA_FOLDER, "test_final")
 
-DATA_FOLDERS = {"train": TRAIN_DATA_FOLDER, "val": VAL_DATA_FOLDER, "test": TEST_DATA_FOLDER}
+DATA_FOLDERS = {
+    "train": TRAIN_DATA_FOLDER,
+    "val": VAL_DATA_FOLDER,
+    "test": TEST_DATA_FOLDER,
+    "test_final": TEST_FINAL_DATA_FOLDER,
+}
 
 ALL_DOCUMENTS_CSV = os.path.join(DATA_FOLDER, "all_documents.csv")
 TRAIN_CSV = os.path.join(DATA_FOLDER, "train.csv")

@@ -103,7 +103,7 @@ class Evaluator:
         class_report = classification_report(y_true, y_pred, labels=sorted_labels, output_dict=True)
         return class_report["macro avg"]["f1-score"]
 
-    def evaluate_relation(self) -> float:
+    def evaluate_relation(self) -> float:  # noqa: C901
         filenames = [
             filename
             for filename in os.listdir(self.relation_annotation_dir)
