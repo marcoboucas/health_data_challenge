@@ -1,2 +1,4 @@
 *
 !.gitignore
+!bert_classif_embed
+!bert_classif_embed/.gitkeep
