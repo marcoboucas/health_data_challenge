@@ -3,8 +3,8 @@ import logging
 from typing import List
 
 import numpy as np
+import torch
 from datasets import load_metric
-from tqdm import tqdm
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -25,7 +25,12 @@ from src.types import EntityAnnotation
 class BertAssessorSentences(BaseAssessor):
     """Bert Assertion NER"""
 
-    def __init__(self) -> None:
+    def __init__(self, device=False) -> None:
+        """Init."""
+        super().__init__()
+        self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+        self.logger.info("Running the model on the device: '%s'", self.device)
+
         self.model_name = "bvanaken/clinical-assertion-negation-bert"
         self.num_labels = 3
 
@@ -33,13 +38,13 @@ class BertAssessorSentences(BaseAssessor):
             self.model_name,
             num_labels=self.num_labels,
         )
-        self.tokenizer = AssertionSentenceTokenizer(base_tokenizer=self.model_name)
+        self.tokenizer = AssertionSentenceTokenizer(
+            base_tokenizer=self.model_name, device=self.device
+        )
         self.model = AutoModelForSequenceClassification.from_pretrained(
             self.model_name, config=self.config
-        )
+        ).to(self.device)
         self.metric = load_metric("seqeval")
-
-        super().__init__()
 
     def load_weights(self, path: str):
         """Loads the weights"""
@@ -51,12 +56,12 @@ class BertAssessorSentences(BaseAssessor):
         """Assertion prediction functions"""
         pred_assertions = []
 
-        for text, entities in tqdm(zip(texts, concepts), total=len(concepts)):
+        for text, entities in zip(texts, concepts):
             classified_tokens = []
             tokenized_text, lines_concepts = self.tokenizer(text=text, concepts=entities)
-            for batch in tqdm(tokenized_text):
+            for batch in tokenized_text:
                 output = self.model(**batch)
-                output_as_np = output.logits.detach().numpy()
+                output_as_np = output.logits.detach().cpu().numpy()
                 for i in range(output_as_np.shape[0]):
                     line_output = output_as_np[i, :]
                     classified_tokens.append(np.argmax(line_output, axis=0))

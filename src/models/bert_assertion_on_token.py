@@ -1,10 +1,10 @@
 """Assertion BERT model"""
 import logging
-from typing import List
+from typing import List, Optional
 
 import numpy as np
+import torch
 from datasets import load_metric
-from tqdm import tqdm
 from transformers import (
     AutoConfig,
     AutoModelForTokenClassification,
@@ -23,8 +23,18 @@ from src.types import EntityAnnotation
 class BertAssessorTokens(BaseAssessor):
     """Bert Assertion NER"""
 
-    def __init__(self) -> None:
-        self.model_name = "bvanaken/clinical-assertion-negation-bert"
+    def __init__(
+        self,
+        model_name: str = "bvanaken/clinical-assertion-negation-bert",
+        device: Optional[int] = None,
+    ) -> None:
+        """Init."""
+        super().__init__()
+        self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+        self.logger.info("Running the model on the device: '%s'", self.device)
+
+        self.model_name = model_name
+        self.logger.info("Loading the model '%s'", self.model_name)
         self.num_labels = 3
 
         self.config = AutoConfig.from_pretrained(
@@ -34,10 +44,8 @@ class BertAssessorTokens(BaseAssessor):
         self.tokenizer = AssertionTokenizer(base_tokenizer=self.model_name)
         self.model = AutoModelForTokenClassification.from_pretrained(
             self.model_name, config=self.config
-        )
+        ).to(self.device)
         self.metric = load_metric("seqeval")
-
-        super().__init__()
 
     def load_weights(self, path: str):
         """Loads the weights"""
@@ -49,18 +57,17 @@ class BertAssessorTokens(BaseAssessor):
         """Assertion prediction functions"""
         pred_assertions = []
 
-        for text, entities in tqdm(zip(texts, concepts), total=len(concepts)):
+        for text, entities in zip(texts, concepts):
             classified_tokens = []
             tokenized_text = self.tokenizer(text=text, concepts=entities)
-            for batch in tqdm(tokenized_text):
-                output = self.model(**batch)
-                output_as_np = output.logits.detach().numpy()
+            for batch in tokenized_text:
+                output = self.model(batch.input_ids.to(self.device))
+                output_as_np = output.logits.cpu().detach().numpy()
                 for i in range(output_as_np.shape[0]):
                     line_output = output_as_np[i, :, :]
                     classified_tokens.append(np.argmax(line_output, axis=1))
 
             pred_assertions.append(self.__format_assertions(classified_tokens, entities))
-
         return pred_assertions
 
     def train(

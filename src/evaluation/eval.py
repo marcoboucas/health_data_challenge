@@ -9,7 +9,13 @@ from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
 import fire
-from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    classification_report,
+    confusion_matrix,
+)
 
 O_TOKEN = "O_TOKEN"
 TASK_CONCEPT = "CONCEPT"
@@ -62,6 +68,7 @@ class Evaluator:
         print("F1 ASSERTIONS", f1_assertion)
         print("F1 RELATIONS", f1_rel)
         print(round(global_score, 2))
+        plt.show()
 
     def evaluate_concept(self) -> float:
         y_true, y_pred = self._load_entities(TASK_CONCEPT)
@@ -70,7 +77,9 @@ class Evaluator:
             for label, _ in sorted(Counter(y_true).items(), key=lambda c: (c[0] != O_TOKEN, -c[1]))
         ]
         print("## Confusion matrix for concepts ##")
-        print(confusion_matrix(y_true, y_pred, labels=sorted_labels))
+        concept_cm = confusion_matrix(y_true, y_pred, labels=sorted_labels, normalize="true")
+        ConfusionMatrixDisplay(concept_cm, display_labels=sorted_labels).plot()
+        print(concept_cm)
         print("\n## Classification report for concepts ##")
         print(classification_report(y_true, y_pred, labels=sorted_labels))
         class_report = classification_report(y_true, y_pred, labels=sorted_labels, output_dict=True)
@@ -83,18 +92,25 @@ class Evaluator:
             for label, _ in sorted(Counter(y_true).items(), key=lambda c: (c[0] != O_TOKEN, -c[1]))
         ]
         print("## Confusion matrix for assertions ##")
-        print(confusion_matrix(y_true, y_pred, labels=sorted_labels))
+        assertions_cm = confusion_matrix(y_true, y_pred, labels=sorted_labels, normalize="true")
+        ConfusionMatrixDisplay(
+            assertions_cm,
+            display_labels=sorted_labels,
+        ).plot()
+        print(assertions_cm)
         print("\n## Classification report for assertions ##")
         print(classification_report(y_true, y_pred, labels=sorted_labels))
         class_report = classification_report(y_true, y_pred, labels=sorted_labels, output_dict=True)
         return class_report["macro avg"]["f1-score"]
 
-    def evaluate_relation(self) -> float:
+    def evaluate_relation(self) -> float:  # noqa: C901
         filenames = [
             filename
             for filename in os.listdir(self.relation_annotation_dir)
             if filename.endswith(".rel")
         ]
+        rel_cm = np.zeros((len(RelationValue), len(RelationValue)))
+        label2idx = {k: i for i, k in enumerate(RelationValue)}
         relation_results = self._init_dict_results_for_relations()
         for filename in filenames:
             ground_truth_relations = self._load_relation_annotation_file(
@@ -105,17 +121,30 @@ class Evaluator:
             )
 
             # Look for true positive
+            predictions_in_real = set()
             for gt_rel in ground_truth_relations:
                 relation_results[gt_rel.label.value][NB_GROUND_TRUTH] += 1
-                for pred_rel in prediction_relations:
+                for i, pred_rel in enumerate(prediction_relations):
                     if self._is_rel_equal(gt_rel, pred_rel) is True:
                         relation_results[gt_rel.label.value][TP] += 1
+                        rel_cm[label2idx[gt_rel.label]][label2idx[pred_rel.label]] += 1
+                        predictions_in_real.add(i)
                         break
+                    elif self._are_relation_entities_equal(gt_rel, pred_rel) is True:
+                        rel_cm[label2idx[gt_rel.label]][label2idx[pred_rel.label]] += 1
+                        predictions_in_real.add(i)
+                        break
+
+                else:
+                    rel_cm[label2idx[gt_rel.label]][label2idx[RelationValue.NO_RELATION]] += 1
+            for i, pred_rel in enumerate(prediction_relations):
+                if i not in prediction_relations:
+                    rel_cm[label2idx[RelationValue.NO_RELATION]][label2idx[pred_rel.label]] += 1
 
             # Count nb of predictions for each relation type
             for pred_rel in prediction_relations:
                 relation_results[pred_rel.label.value][NB_PRED] += 1
-
+        ConfusionMatrixDisplay(rel_cm, display_labels=[x.value for x in label2idx.keys()]).plot()
         for rel_type in relation_results.keys():
             relation_results[rel_type][RECALL] = (
                 round(
@@ -409,10 +438,19 @@ class Evaluator:
         }
 
     def _is_rel_equal(self, first_rel: RelationAnnotation, snd_rel: RelationAnnotation) -> bool:
+        return (first_rel.label == snd_rel.label) and self._are_relation_entities_equal(
+            first_rel=first_rel, snd_rel=snd_rel
+        )
+
+    def _are_relation_entities_equal(
+        self, first_rel: RelationAnnotation, snd_rel: RelationAnnotation
+    ) -> bool:
         return (
-            (first_rel.label == snd_rel.label)
-            and self._is_entity_equal(first_rel.left_entity, snd_rel.left_entity)
+            self._is_entity_equal(first_rel.left_entity, snd_rel.left_entity)
             and self._is_entity_equal(first_rel.right_entity, snd_rel.right_entity)
+        ) or (
+            self._is_entity_equal(first_rel.left_entity, snd_rel.right_entity)
+            and self._is_entity_equal(first_rel.left_entity, snd_rel.right_entity)
         )
 
     @staticmethod

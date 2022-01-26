@@ -35,5 +35,10 @@ class RelDataset(DatasetLoader):
         patient = self.data_frame.iloc[idx]
         text = self.parser.get_raw_text(patient["txt"])
         relations = self.parser.parse_annotation_relation(patient["rel"])
+        concepts = self.parser.parse_annotation_concept(patient["concept"])
 
-        return self.find_interesting_lines_from_relations(text, relations)
+        return (
+            self.find_interesting_lines_from_relations(text, relations),
+            concepts,
+            text.split("\n"),
+        )

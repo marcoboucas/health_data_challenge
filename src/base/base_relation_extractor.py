@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
-from src.types import EntityAnnotation, RelationAnnotation
+from src.types import EntityAnnotation, RelationAnnotation, RelationValue
 
 
 class BaseRelExtractor(ABC):
@@ -32,8 +32,10 @@ class BaseRelExtractor(ABC):
         assert file_path.endswith(".rel"), "The file must be a .rel file"
         with open(file_path, "w", encoding="utf-8") as file:
             for relation in relations:
+                if relation.label == RelationValue.NO_RELATION.value:
+                    pass
                 entity_left_text = relation.left_entity.text.replace("\n", " ")
-                entity_right_text = relation.left_entity.text.replace("\n", " ")
+                entity_right_text = relation.right_entity.text.replace("\n", " ")
                 file.write(
                     (
                         f'c="{entity_left_text}" '
@@ -55,8 +57,10 @@ class BaseRelExtractor(ABC):
         lines = text.split("\n")
 
         entities_per_line: Dict[int, List[EntityAnnotation]] = defaultdict(list)
+
         for entity in entities:
             entities_per_line[entity.start_line].append(entity)
+        # pprint(entities_per_line)
 
         for line_idx, line_entities in entities_per_line.items():
             line_problems = list(filter(lambda x: x.label == "problem", line_entities))
@@ -66,7 +70,11 @@ class BaseRelExtractor(ABC):
             # It's an interesting line !
             line = lines[line_idx - 1]
             entities_in_relation = []
-
+            # print('\n')
+            # pprint(line_problems)
+            # print('\n')
+            # print(line_entities)
+            # print('\n'*3)
             for problem in line_problems:
                 for other_entity in line_entities:
                     if problem.start_word == other_entity.start_word:
@@ -76,8 +84,9 @@ class BaseRelExtractor(ABC):
                         other_entity.label == "problem"
                         and other_entity.start_word < problem.start_word
                     ):
-                        break
+                        continue
 
                     entities_in_relation.append((problem, other_entity))
             interesting_lines.append((line, entities_in_relation))
+        # print('\n'*3)
         return interesting_lines

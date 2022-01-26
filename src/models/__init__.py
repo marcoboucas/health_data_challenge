@@ -42,7 +42,10 @@ def get_assessor(assessor_name: str, assessor_path: Optional[str] = None) -> Bas
     elif assessor_name == "bert":
         from src.models.bert_assertion_on_sentences import BertAssessorSentences
 
-        assessor = BertAssessorSentences()
+        if assessor_path is not None:
+            assessor = BertAssessorSentences()
+        else:
+            assessor = BertAssessorSentences()
     else:
         raise ValueError(f"No '{assessor_name}' Assessor model")
     return assessor
@@ -56,7 +59,7 @@ def get_relation_extractor(extractor_name: str, weights_path: str = None) -> Bas
         from src.models.random_relation_extractor import RandomRelExtractor
 
         extractor = RandomRelExtractor()
-    elif extractor_name == "huggingface":
+    elif extractor_name == "bert":
         from src.models.bert_relation_extractor import BertRelExtractor
 
         extractor = BertRelExtractor(weights_path=weights_path)
