@@ -1,4 +1,5 @@
 import logging
+import pickle
 from math import ceil
 from typing import Any, Dict, List, Tuple
 
@@ -24,29 +25,61 @@ class BertClassifier:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        dataset: DatasetLoader,
-        target_label: str = "problem",
-        embedding_layers: List[int] = None,
-        normalize_embeddings: bool = True,
         batch_size: int = 16,
     ):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info("Init the classifier...")
         # Save all params
-        self.embedding_layers = (
-            embedding_layers if embedding_layers is not None else [-4, -3, -2, -1]
-        )
-        self.dataset = dataset
-        self.target_label = target_label
         self.batch_size = batch_size
+        self.embedding_layers = None
+        self.target_label = None
+        self.normalize_embeddings = None
         self.mean_embedding = None
+        self.base_texts = []
+        self.base_embeddings = []
         # Format and get embeddings of data
-        self.formatted_data = self.__format_data(dataset)
+        self.__load_weights()
         self.__initiate_tokenizer_model()
-        self.base_embeddings = self.__load_all_embeddings()
-        if normalize_embeddings:
+        self.logger.info("Classifier init ended!")
+
+    def train(
+        self,
+        dataset: DatasetLoader,
+        target_label: str = "problem",
+        embedding_layers: List[int] = None,
+        normalize_embeddings: bool = True,
+    ):
+        """
+        To train the model (i.e. generate the embeddings)
+        """
+        # We must check if the params are the same that the one saved in the dataset
+        assert self.target_label is None or target_label == self.target_label
+        assert (
+            self.embedding_layers is None
+            or embedding_layers is None
+            or sorted(embedding_layers) == sorted(self.embedding_layers)
+        )
+        assert (
+            self.normalize_embeddings is None or normalize_embeddings == self.normalize_embeddings
+        )
+        self.logger.info("Beginning training...")
+        self.embedding_layers = (
+            embedding_layers
+            if embedding_layers is not None
+            else (self.embedding_layers if self.embedding_layers is not None else [-4, -3, -2, -1])
+        )
+        self.base_texts.extend(list(map(lambda elt: elt.raw_text, dataset)))
+        self.target_label = target_label
+        self.normalize_embeddings = normalize_embeddings
+        if self.normalize_embeddings:
+            self.__denormalize_embeddings()
+        # Format and get embeddings of data
+        formatted_data = self.__format_data(dataset)
+        self.base_embeddings.extend(self.__load_all_embeddings(formatted_data))
+        if self.normalize_embeddings:
             self.__normalize_embeddings()
-        self.logger.info("All data loaded!")
+        self.__save_weights()
+        self.logger.info("Training ended!")
 
     def get_best_docs(
         self, doc: DataInstance, nb_docs: int = 5
@@ -67,8 +100,43 @@ class BertClassifier:
         best_indices = sorted(
             range(len(similarities)), key=lambda i: similarities[i], reverse=True
         )[:nb_docs]
-        best_docs = [(similarities[k], self.dataset[k]) for k in best_indices]
+        best_docs = [(similarities[k], self.base_texts[k]) for k in best_indices]
         return best_docs
+
+    def __load_weights(self):
+        """
+        To load all the weights
+        """
+        try:
+            # pylint: disable=consider-using-with
+            file = open(config.CLASSIF_BERT_EMBEDDINGS, "rb")
+            data_to_load = pickle.load(file)
+            self.target_label = data_to_load["target_label"]
+            self.normalize_embeddings = data_to_load["normalize_embeddings"]
+            self.embedding_layers = data_to_load["embedding_layers"]
+            self.base_texts = data_to_load["base_texts"]
+            self.base_embeddings = data_to_load["base_embeddings"]
+            self.mean_embedding = data_to_load["mean_embedding"]
+            self.logger.info("Weights loaded with a corpus of %s docs", len(self.base_embeddings))
+        except FileNotFoundError:
+            self.logger.warning("No weights loaded, should train before using it")
+
+    def __save_weights(self):
+        """
+        To save all the weights we will need later
+        """
+        data_to_save = {
+            "target_label": self.target_label,
+            "normalize_embeddings": self.normalize_embeddings,
+            "embedding_layers": self.embedding_layers,
+            "base_texts": self.base_texts,
+            "base_embeddings": self.base_embeddings,
+            "mean_embedding": self.mean_embedding,
+        }
+        with open(config.CLASSIF_BERT_EMBEDDINGS, "wb") as file:
+            # asdict
+            pickle.dump(data_to_save, file)
+        logging.info("All weights loaded!")
 
     def __initiate_tokenizer_model(self):
         """
@@ -87,12 +155,12 @@ class BertClassifier:
                 "emilyalsentzer/Bio_ClinicalBERT", output_hidden_states=True
             ).to(self.device)
 
-    def __load_all_embeddings(self):
+    def __load_all_embeddings(self, formatted_data: List[List[Dict[str, Any]]]):
         """
         To load the embeddings of all the training docs
         """
         embeddings = []
-        for doc in tqdm(self.formatted_data):
+        for doc in tqdm(formatted_data):
             embedding = self.__get_embedding_from_doc(doc)
             embeddings.append(embedding)
         return embeddings
@@ -159,6 +227,14 @@ class BertClassifier:
             hidden_states.append(output[i, ids].squeeze(dim=0).mean(dim=0).cpu().numpy())
         return hidden_states
 
+    def __denormalize_embeddings(self):
+        """
+        To denormalize embeddings using their mean
+        """
+        self.base_embeddings = [
+            e + self.mean_embedding if e is not None else None for e in self.base_embeddings
+        ]
+
     def __normalize_embeddings(self):
         """
         To normalize embeddings using their mean
@@ -171,7 +247,7 @@ class BertClassifier:
         ]
 
     @staticmethod
-    def __format_data(base_dataset: DatasetLoader):
+    def __format_data(base_dataset: DatasetLoader) -> List[List[Dict[str, Any]]]:
         """
         To extract useful information from the dataset
         """
@@ -181,7 +257,7 @@ class BertClassifier:
         return formatted_data
 
     @staticmethod
-    def __format_one_doc(doc: DataInstance):
+    def __format_one_doc(doc: DataInstance) -> List[Dict[str, Any]]:
         """
         To format a single doc
         """
@@ -202,28 +278,19 @@ class BertClassifier:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+    classifier = BertClassifier()
+
+    # Train the classifier
     train_set = DatasetLoader(mode="train", size=8)
-    classifier = BertClassifier(train_set)
+    # classifier.train(train_set)
 
     # Test the classifier
     doc_comp = train_set[3]
     best_docs_comp = classifier.get_best_docs(doc_comp)
     print("\n-------------------------------------")
     print("This doc:\n")
-    print(
-        [
-            label.text
-            for label in doc_comp.annotation_concept
-            if label is not None and label.label == "problem"
-        ]
-    )
-    for rank, (score, sim_doc) in enumerate(best_docs_comp):
+    print(doc_comp.raw_text)
+    for rank, (score, doc_text) in enumerate(best_docs_comp):
         print("\n-------------------------------------")
         print(f"{rank+1}th best doc (score of {score}):\n")
-        print(
-            [
-                label.text
-                for label in sim_doc.annotation_concept
-                if label is not None and label.label == "problem"
-            ]
-        )
+        print(doc_text)
