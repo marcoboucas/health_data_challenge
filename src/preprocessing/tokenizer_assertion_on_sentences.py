@@ -12,9 +12,12 @@ from src.types import EntityAnnotation
 class AssertionSentenceTokenizer:
     """Assertion Tokenizer"""
 
-    def __init__(self, base_tokenizer: str = "bvanaken/clinical-assertion-negation-bert") -> None:
+    def __init__(
+        self, base_tokenizer: str = "bvanaken/clinical-assertion-negation-bert", num_labels: int = 3
+    ) -> None:
         super().__init__()
         self.base_tokenizer = AutoTokenizer.from_pretrained(base_tokenizer)
+        self.num_labels = num_labels
 
     def __call__(
         self,
@@ -198,7 +201,13 @@ class AssertionSentenceTokenizer:
                         split_line[word_id] = config.TAG_ENTITY
                         tag_added = True
                 lines_tagged.append(" ".join(split_line))
-                lines_labeled.append(config.LABEL_ENCODING_DICT[assertion.label])
+                # num_labels - 1 to merge labels with id greater than num_labels - 1
+                # to last label
+                # e.g. when num_labels = 3, conditional, possible and hypothetical are merged
+                # to one unqiue label
+                lines_labeled.append(
+                    min(self.num_labels - 1, config.LABEL_ENCODING_DICT[assertion.label])
+                )
 
             if (
                 found.lower().strip() != assertion.text.lower().strip()
