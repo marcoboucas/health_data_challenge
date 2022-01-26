@@ -67,4 +67,4 @@ NER_BERT_WEIGHTS_FOLDER = os.path.join(MODELS_WEIGHTS_FOLDER, "bert_ner")
 DEFAULT_RELATION_WEIGHTS_FOLDER = os.path.join(WEIGHTS_FOLDER, "rel_extractor_bert")
 
 # Bert classification with embeddings
-CLASSIF_BERT_EMBEDDINGS = os.path.join(MODELS_WEIGHTS_FOLDER, "bert_embed.pkl")
+CLASSIF_BERT_EMBEDDINGS_FOLDER = os.path.join(MODELS_WEIGHTS_FOLDER, "bert_classif_embed")
