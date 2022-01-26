@@ -60,7 +60,7 @@ LABEL_ENCODING_DICT = {
     "hypothetical": 4,
     "associated_with_someone_else": 5,
 }
-BATCH_SIZE = 8
+BATCH_SIZE = 4
 NER_BERT_WEIGHTS_FOLDER = os.path.join(MODELS_WEIGHTS_FOLDER, "bert_ner")
 
 # RELATION MODEL

@@ -35,13 +35,11 @@ class AssertionSentenceTokenizer:
         split_text: List[str] = self.__split_into_sentences(text)
 
         if assertions is not None:
-            logging.info("Tokenizer in training mode")
 
             lines_tagged, lines_labeled = self.__tag_train_samples(split_text, assertions)
             batch_labels = self.__get_batch(lines_labeled, config.BATCH_SIZE)
 
         else:
-            logging.info("Tokenizer in inference mode")
             lines_tagged, lines_concepts = self.__tag_inference_samples(split_text, concepts)
 
         batch_lines = self.__get_batch(lines_tagged, config.BATCH_SIZE)

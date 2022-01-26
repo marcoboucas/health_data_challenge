@@ -4,6 +4,7 @@ from typing import List
 
 import numpy as np
 from datasets import load_metric
+from torch import nn
 from tqdm import tqdm
 from transformers import (
     AutoConfig,
@@ -27,7 +28,7 @@ class BertAssessorSentences(BaseAssessor):
 
     def __init__(self) -> None:
         self.model_name = "bvanaken/clinical-assertion-negation-bert"
-        self.num_labels = 3
+        self.num_labels = len(config.LABEL_LIST)
 
         self.config = AutoConfig.from_pretrained(
             self.model_name,
@@ -35,8 +36,10 @@ class BertAssessorSentences(BaseAssessor):
         )
         self.tokenizer = AssertionSentenceTokenizer(base_tokenizer=self.model_name)
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name, config=self.config
+            self.model_name, config=self.config, ignore_mismatched_sizes=True
         )
+        self.model.classifier = nn.Linear(in_features=768, out_features=self.num_labels, bias=True)
+
         self.metric = load_metric("seqeval")
 
         super().__init__()
@@ -125,9 +128,4 @@ if __name__ == "__main__":
         push_to_hub=False,
     )
 
-    # berter_assert.train(dataset_train, training_arguments)
-
-    for j, data in enumerate(dataset_val):
-        if j == 1:
-            print(data.raw_text)
-            print(berter_assert.assess_entities([data.raw_text], [data.annotation_concept]))
+    berter_assert.train(dataset_train, training_arguments)

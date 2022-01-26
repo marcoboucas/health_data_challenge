@@ -1,6 +1,6 @@
 """Dataset loader"""
 from dataclasses import asdict, dataclass, field
-from typing import Dict, List, Literal
+from typing import Dict, List
 
 import pandas as pd
 
@@ -25,7 +25,7 @@ class DataInstance:
 class DatasetLoader:
     """Load the dataset"""
 
-    def __init__(self, mode: Literal["train", "val", "test"] = "train", size: int = -1) -> None:
+    def __init__(self, mode: str = "train", size: int = -1) -> None:
         self.size = size
         self.columns = ["name", "path", "concept", "ast", "rel"]
         self.parser = Parser()
