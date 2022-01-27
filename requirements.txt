@@ -6,3 +6,4 @@ tqdm==4.62.3
 dacite==1.6.0
 seqeval==1.2.2
 matplotlib==3.5.1
+plotly==5.5.0

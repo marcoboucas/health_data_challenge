@@ -98,9 +98,7 @@ class BertNer(BaseNer):
     ### For entity extraction ###
     #############################
 
-    def __extract_entities_one_file(
-        self, text: str, batch_size: int = 16
-    ) -> List[EntityAnnotation]:
+    def __extract_entities_one_file(self, text: str, batch_size: int = 4) -> List[EntityAnnotation]:
         """Extract entities from one file"""
         # First we must get tokens, predictions and word ids of tokens
         lines = list(map(lambda sentence: sentence.split(" "), text.split("\n")))
