@@ -1,5 +1,10 @@
 # Health AI challenge
 
+[![wakatime](https://wakatime.com/badge/github/marcoboucas/health_data_challenge.svg)](https://wakatime.com/badge/github/marcoboucas/health_data_challenge)
+[![GitHub issues](https://img.shields.io/github/issues/marcoboucas/health_data_challenge)](https://github.com/marcoboucas/health_data_challenge/issues)
+![GitHub branch checks state](https://img.shields.io/github/checks-status/marcoboucas/health_data_challenge/main)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/marcoboucas/health_data_challenge)
+
 Health AI challenge organized by CentraleSupelec and ILLUIN Technology.
 The script eval.py allows you to evaluate your approach to the first part of the health AI challenge.
 
