@@ -7,6 +7,7 @@ from typing import List
 import streamlit as st
 
 from demonstrator.utils import get_cluster_name, get_username
+from src.config import NER_BERT_WEIGHTS_FOLDER
 from src.models import get_ner
 
 
@@ -43,7 +44,7 @@ class Pipeline:
         """Runs the pipeline"""
         texts = self.__load_files()
         st.write(f"Running on {len(texts)}")
-        ner = get_ner(self.ner)
+        ner = get_ner("bert", NER_BERT_WEIGHTS_FOLDER)
         patients_concepts = ner.extract_entities(texts)
         del ner
 
@@ -63,6 +64,14 @@ class Pipeline:
                 result[key] = patient_information[key]
             for key in patient_pbs:
                 result[key] = patient_pbs[key]
+
+            result = dict(result)
+            for key in ["problems", "tests", "treatments"]:
+                if key not in result:
+                    if key == "problems":
+                        result[key] = {}
+                    else:
+                        result[key] = []
             patients.append(result)
 
         return self.generate_clusters(patients)
@@ -95,5 +104,5 @@ class Pipeline:
                 if key not in ["name", "patients"]:
                     cluster[key] = list(set(cluster[key]))
 
-            clusters[i] = cluster
+            clusters[i] = dict(cluster)
         return clusters
