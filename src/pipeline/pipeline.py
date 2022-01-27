@@ -1,10 +1,12 @@
 """Pipeline"""
 import os
+from collections import defaultdict
+from random import choice
 from typing import List
 
 import streamlit as st
 
-from demonstrator.utils import get_username
+from demonstrator.utils import get_cluster_name, get_username
 from src.models import get_ner
 
 
@@ -39,27 +41,36 @@ class Pipeline:
 
     def run(self):
         """Runs the pipeline"""
-        texts = self.__load_files()[:3]
+        texts = self.__load_files()
         st.write(f"Running on {len(texts)}")
         ner = get_ner(self.ner)
         patients_concepts = ner.extract_entities(texts)
         del ner
 
-        # assertions: List[List[EntityAnnotation]] = self.assertion_bert.assess_entities(
-        #     texts, concepts
-        # )
-
         patients = []
-        print(patients_concepts)
         for patient_concepts in patients_concepts:
-            patient = dict(name=get_username(), test=[], problem=[], treatment=[])
-
+            patient_information = defaultdict(list)
+            patient_pbs = defaultdict(dict)
             for concept in patient_concepts:
-                patient[concept.label].append(concept.text)
+                if concept.label != "problem":
+                    patient_information[concept.label + "s"].append(concept.text)
+                else:
+                    patient_pbs[concept.label + "s"][concept.text] = self.get_assertion()
+            result = {
+                "name": get_username(),
+            }
+            for key in patient_information:
+                result[key] = patient_information[key]
+            for key in patient_pbs:
+                result[key] = patient_pbs[key]
+            patients.append(result)
 
-            print(patient)
+        return self.generate_clusters(patients)
 
-        return patients
+    @staticmethod
+    def get_assertion():
+        """Get assertion"""
+        return choice(["present", "absent", "hypothetical"])
 
     @staticmethod
     def generate_clusters(patients: List[str]):
@@ -68,11 +79,21 @@ class Pipeline:
         batch_size = 5
 
         for i in range(0, len(patients), batch_size):
-            cluster = {}
-            cluster["patients"] = patients[i : i + batch_size]
-            # cluster["name"] = get_cluster_name(cluster["patients"])
+            cluster = defaultdict(list)
+            selected_patients = patients[i : i + batch_size]
+            cluster["patients"] = selected_patients
 
-            # for x in ["problem", "l"]:
-            #     pass
+            cluster["name"] = get_cluster_name(selected_patients)
 
+            for patient in selected_patients:
+                for key in patient:
+                    if key not in ["name", "problem"]:
+                        cluster[key + "_labels"].extend(patient[key])
+                    elif key == "problem":
+                        cluster[key + "_labels"].extend(patient[key].keys())
+            for key in cluster:
+                if key not in ["name", "patients"]:
+                    cluster[key] = list(set(cluster[key]))
+
+            clusters[i] = cluster
         return clusters

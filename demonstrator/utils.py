@@ -16,7 +16,6 @@ PATIENT_NAMES = [
     "Draco Malfoy",
     "Albus Perceval Wulfric Brian Dumbledore",
     "Severus Albus Potter",
-    "Nicolas Laubé",
     "Captain Brownie",
     "Donald Trump",
     "Bruce Wayne",
@@ -79,12 +78,20 @@ def get_cluster_name(patients: List[Dict]) -> str:
     """Get the cluster name from the patients."""
     counter = Counter()
     for patient in patients:
-        counter.update(patient["problems"])
+        counter.update(list(patient["problems"].keys()))
         counter.update(patient["tests"])
         counter.update(patient["treatments"])
-    return ", ".join(list(map(lambda x: x[0], counter.most_common(3))))
+    return ", ".join(
+        list(
+            filter(
+                lambda x: x not in ["patient", "admission"],
+                map(lambda x: x[0], counter.most_common(3)),
+            )
+        )
+    )
 
 
+@st.cache()
 def load_fake_data():
     """Loads fake data"""
 
@@ -103,14 +110,6 @@ def load_fake_data():
     return data
 
 
-@st.cache
-def load_data(fake: bool = True):
-    """Load the data."""
-    if fake:
-        return load_fake_data()
-    return None
-
-
 def get_username() -> str:
     """Return user names"""
     return choice(PATIENT_NAMES)
@@ -120,7 +119,7 @@ def generate_one_patient(cluster):
     """Generate one patient."""
 
     problems = list(
-        set(list(np.random.choice(cluster["problem_labels"], size=randint(1, 2))))
+        set(list(np.random.choice(cluster["problems_labels"], size=randint(1, 2))))
         | set(list(np.random.choice(PROBLEMS, size=randint(0, 2))))
     )
     tests = list(
@@ -128,12 +127,12 @@ def generate_one_patient(cluster):
         | set(list(np.random.choice(TESTS, size=randint(0, 2))))
     )
     treatments = list(
-        set(list(np.random.choice(cluster["treatment_labels"], size=randint(1, 2))))
+        set(list(np.random.choice(cluster["treatments_labels"], size=randint(1, 2))))
         | set(list(np.random.choice(TREATMENTS, size=randint(0, 2))))
     )
     return dict(
         name=get_username(),
-        problems=problems,
+        problems={k: choice(["present", "absent", "hypothetical"]) for k in problems},
         tests=tests,
         treatments=treatments,
     )

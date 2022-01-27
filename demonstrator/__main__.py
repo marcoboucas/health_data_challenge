@@ -10,9 +10,9 @@ sys.path.append(".")
 from demonstrator.expandable import expandable_cluster
 
 # pylint: disable=wrong-import-position
-from demonstrator.sidebar import sidebar_view
-from demonstrator.uploader import uploader
-from demonstrator.utils import load_data
+from demonstrator.sidebar import filter_data, sidebar_filters, sidebar_view
+from demonstrator.uploader import run_pipeline, uploader
+from demonstrator.utils import load_fake_data
 
 st.set_page_config(
     page_title="Health Challenge",
@@ -28,6 +28,16 @@ st.set_page_config(
 st.markdown("## Health Project")
 
 
+@st.cache
+def load_data(fake: bool = True):
+    """Load the data."""
+    if fake:
+        return load_fake_data()
+    return run_pipeline(st.session_state.get("data-folder", "./data/val/txt/"))
+
+
+is_fake_data = st.session_state.get("is-fake-data", True)
+
 st.markdown("### Upload data")
 
 uploader()
@@ -39,7 +49,17 @@ def to_csv(df):
     return df.to_csv().encode("utf-8")
 
 
-data = load_data()
+sidebar_view()
+
+
+data = load_data(fake=is_fake_data)
+
+filters = sidebar_filters(data)
+
+data = filter_data(data, filters)
+
+
+# Add new filters based on the data we have
 
 st.markdown("### Cohort Selection")
 
@@ -50,7 +70,6 @@ for cluster_id, cluster in data.items():
         value=cluster_id == "1",
     )
 
-sidebar_view()
 
 cohortes_df_ = []
 for cluster in data.values():

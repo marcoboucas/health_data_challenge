@@ -7,14 +7,14 @@
             "colonoscopy",
             "electrocardiogram"
         ],
-        "problem_labels": [
+        "problems_labels": [
             "tumor",
             "depressed",
             "chondrocalcinosis",
             "hemorrhage",
             "pulses"
         ],
-        "treatment_labels": [
+        "treatments_labels": [
             "immunization",
             "tetracyclines",
             "supplements",
@@ -30,14 +30,14 @@
             "radiograph",
             "urean"
         ],
-        "problem_labels": [
+        "problems_labels": [
             "edema",
             "crackle",
             "cellulitis",
             "bleeding",
             "nondysmorphic"
         ],
-        "treatment_labels": [
+        "treatments_labels": [
             "klonopin",
             "nitrates",
             "iron",
@@ -56,13 +56,13 @@
             "lymphocytes",
             "trig"
         ],
-        "problem_labels": [
+        "problems_labels": [
             "paranoia",
             "ascites",
             "metastases",
             "rbbb"
         ],
-        "treatment_labels": [
+        "treatments_labels": [
             "sinemet",
             "sedated",
             "clomipramine",

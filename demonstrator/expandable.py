@@ -16,7 +16,7 @@ def expandable_cluster(cluster):
             [
                 [
                     patient["name"],
-                    ", ".join(patient["problems"]),
+                    ", ".join(list(patient["problems"].keys())),
                     ", ".join(patient["treatments"]),
                     ", ".join(patient["tests"]),
                 ]
@@ -32,7 +32,10 @@ def expandable_cluster(cluster):
             for col, entity_type in zip(cols, ["problems", "treatments", "tests"]):
                 counter = Counter()
                 for patient in cluster["patients"]:
-                    counter.update(patient[entity_type])
+                    try:
+                        counter.update(list(patient[entity_type].keys()))
+                    except:
+                        counter.update(patient[entity_type])
                 fig = px.bar(
                     pd.DataFrame(counter.most_common(), columns=[entity_type, "count"]).head(5),
                     x=entity_type,
